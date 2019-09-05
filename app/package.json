@@ -1,0 +1,16 @@
+{
+  "name": "clan-recruiting-bot",
+  "version": "0.1.0",
+  "description": "ClanRecruitment Discord bot integration",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/k-seth/ClanRecruitingBot.git"
+  },
+  "main": "app.js",
+  "author": "Seth Kuipers",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "node-fetch": "^2.6.0"
+  }
+}
