@@ -5,7 +5,7 @@ A Discord bot to help clans in World of Tanks with recruiting
 
 ### Note: This repo is still in development and IT WILL NOT WORK. It is not connected to the server yet, which is also still under development
 
-This repository focuses on providing a fully featured, but highly customizable, Discord bot for a variety of clans. When downloaded, the bot is set up for a mid to top clan on the NA server. Below the default settings and how you can change them to your needs is outlined. If you don't use Discord, or prefer not to add the bot, there is also a web browser based variant which (eventually) can be found here: https://github.com/k-seth/ClanRecruitingTestUI.git (TODO: Rename repo)
+This repository focuses on providing a fully featured, but highly customizable, Discord bot for a variety of clans. When downloaded, the bot is set up for a mid to top clan on the NA server. Below the default settings and how you can change them to your needs is outlined. If you don't use Discord, or prefer not to add the bot, there is also a web browser based variant which (eventually) can be found here: https://github.com/k-seth/ClanRecruitingWebapp.git
   
 ### Prerequisites  
 

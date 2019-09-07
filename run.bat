@@ -1,10 +1,10 @@
 :: Setup environment
-ren config_template.txt .\app\config.mjs
+ren config_template.txt .\app\config.json
 cd .\app
 if not exist .\historical mkdir .\historical
 call npm install
 
 :: Run server
-node app.js
+node -r esm app.js
 
 PAUSE
