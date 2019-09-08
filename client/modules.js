@@ -14,26 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// Modules imported by the program
-import config from "./config.js";
+// Import modules needed for this file
 import Discord from "discord.js";
 
 // Constants used
-const bot = new Discord.Client();
-const confBot = config.bot;
-
-bot.login(confBot.token);
-
-// Callback that will be used by the program 
-bot.on("message", async function(message) {
-    let runCheck = true;
-    // Listen for messages that says the command specified in config.json. No else is used so that the channel can still be used for communication
-    if (message.content !== confBot.command && message.content !== confBot.seed) {
-        return;
-    } else if (message.content === confBot.seed) {
-        runCheck = false;
-    }
-
-    let list = await getNewRosters(runCheck);
-    message.reply(list); // Disable @user in response
-});
+export const BOT = new Discord.Client();
+export const BOTCONFIG = config.bot;
