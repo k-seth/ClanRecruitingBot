@@ -1,3 +1,7 @@
+:: To consider
+:: Spawn a powershell environment, run a script there?
+:: use get-content to use in place of sed?
+
 :: Setup environment
 ren config_template.txt .\app\config.json
 cd .\app

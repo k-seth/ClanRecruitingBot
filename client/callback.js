@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-modules.BOT.login(modules.BOTCONFIG.token);
+BOT.login(BOTCONFIG.token);
 
 // Callback that will be used by the program 
-modules.BOT.on("message", async function(message) {
+BOT.on("message", async function(message) {
     let runCheck = true;
     // Listen for messages that says the command specified in config.json. No else is used so that the channel can still be used for communication
-    if (message.content !== modules.BOTCONFIG.command && message.content !== modules.BOTCONFIG.seed) {
+    if (message.content !== BOTCONFIG.command && message.content !== BOTCONFIG.seed) {
         return;
-    } else if (message.content === modules.BOTCONFIG.seed) {
+    } else if (message.content === BOTCONFIG.seed) {
         runCheck = false;
     }
 

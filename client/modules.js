@@ -17,9 +17,10 @@
 // Import modules needed for this file
 import Discord from "discord.js";
 
+const BOT = new Discord.Client();
+const BOTCONFIG = config.bot;
+
 // Import and immediately export modules required by the server
-export { Discord as Discord } from "discord.js";
+//export { Discord as Discord } from "discord.js";
 
 // // Export other constants
-export const BOT = new Discord.Client();
-export const BOTCONFIG = config.bot;
