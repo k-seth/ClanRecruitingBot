@@ -1,12 +1,9 @@
 #!/bin/bash
 
 # Setup submodule
-# cat ./client/modules.js >> ./app/modules.js
-# cat ./client/callback.js >> ./app/app.js
-# cp ./client/package.json ./app/
-# Note: Running this script multiple times would cause the files to grow massive
-# Figure out a way to only run if not already done
-# Consider using sed command instead, that way the license isn't copied too?
+# sed -i '/\/\/ Insert other modules here/r modules.js' app.js
+# sed -i '/\/\/ Insert callback here/r callback.js' app.js
+# Next I should find and replace those 2 comments so that the seds will no longer add it
 
 # Setup environment
 [ ! -f ./app/config.json ] && cp config_template.txt ./app/config.json
