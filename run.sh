@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# Setup submodule
-# sed -i '/\/\/ Insert other modules here/r modules.js' app.js
-# sed -i '/\/\/ Insert callback here/r callback.js' app.js
-# Next I should find and replace those 2 comments so that the seds will no longer add it
 
 # Setup environment
+[ -d ./client ] && mv ./client/* ./app && rm -rf ./client
 [ ! -f ./app/config.json ] && cp config_template.txt ./app/config.json
 cd ./app
+
+# Setup app
+sed -i "s|// Modules|$(sed -n '17,19 p' ./modules.js)|g" ./app.js
+sed -i "s|// Callback|$(sed -n '17,28 p' ./callback.js)|g" ./app.js
+
 mkdir -p ./historical
 npm install
 
