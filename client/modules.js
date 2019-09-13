@@ -1,4 +1,4 @@
-// A Node.js server used by multiple Clan Recruiting clients
+// A Discord bot to help clans in World of Tanks with recruiting
 // Copyright (C) 2019 Seth Kuipers
 
 // This program is free software: you can redistribute it and/or modify
@@ -16,4 +16,6 @@
 
 import Discord from "discord.js";\
 const BOT = new Discord.Client();\
-const BOTCONFIG = config.bot;
+const BOT_CONFIG = config.bot;\
+const CHAR_LIMIT = 1850 // Discord has a 2000 character limit. 1850 is to be safe\
+const EPOCH_WEEK = 604800;

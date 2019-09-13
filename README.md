@@ -3,9 +3,9 @@ Author: Seth Kuipers
 
 A Discord bot to help clans in World of Tanks with recruiting
 
-### Note: This repo is still in development and IT WILL NOT WORK. It is not connected to the server yet, which is also still under development
+### Note: This repo is still in development. The Linux bot does currently work, but is still IN PROGRESS, and as such may be buggy. This repo and the server are still under development and testing!
 
-This repository focuses on providing a fully featured, but highly customizable, Discord bot for a variety of clans. When downloaded, the bot is set up for a mid to top clan on the NA server. Below the default settings and how you can change them to your needs is outlined. If you don't use Discord, or prefer not to add the bot, there is also a web browser based variant which (eventually) can be found here: https://github.com/k-seth/ClanRecruitingWebapp.git
+This repository focuses on providing a fully featured, but highly customizable, Discord bot for a variety of clans. When downloaded, the bot is set up for a mid to top clan on the NA server. Below are the default settings. Additionally, how you can change the bot to suit your needs is outlined. If you don't use Discord, or prefer not to add the bot, there is also a web browser based variant which can be found here: https://github.com/k-seth/ClanRecruitingWebapp.git
   
 ### Prerequisites  
 
@@ -15,12 +15,12 @@ For this program to function properly you will need some additional items.
    * This is specific to your account and should not be shared
 3. An app with a bot in your Discord server
    * You can follow these steps if needed: https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/
-   * The bot should have read message and send messages permissions
+   * The bot needs to have have read message and send messages permissions
 4. In config_template.txt, change the value of "application_id" to your Wargaming developer id, and the value of "token" to your Discord bot token. Quotations are required around both
  
 ### Configurables
 
-This section outlines how to use the config_template.txt file to get the most out of the application. REQUIRED fields are ones you must edit, OPTIONAL are if you wish to personalize your app, such as add new clans or change servers
+This section outlines how to use the config_template.txt file to get the most out of the application. REQUIRED fields are ones you must edit, OPTIONAL are if you wish to personalize your app, such as adding new clans or changing servers
 
 1. "application_id": "Your App ID"
    * REQUIRED. How you access the Wargaming API
@@ -41,6 +41,7 @@ This section outlines how to use the config_template.txt file to get the most ou
   
 #### Windows
 
+(Not currently working. Script is not set up)
 1. Navigate to the ClanRecruitingBot folder in the File Explorer
 2. Double click "run.bat"
 3. The bot will now be active in Discord
@@ -55,19 +56,11 @@ This section outlines how to use the config_template.txt file to get the most ou
   
 Below is a list of issues I have encountered in my testing. If something comes up that isn't listed, feel free to open an issue so I can look into it. Specific error output and steps to reproduce the issue would be helpful.  
   
-- Issue: I ran the setup script and it does nothing. The bot doesn't start
-   * Fix: Find the config.mjs file in the app folder, and make sure that you have put your application_id and token in.
+- Unknown
   
 ### Known limitations  
   
-- Not yet functional
-
-### TODO
-
-- Finish README
-- Add the file containing the import statements and the callback, and figure out how to make that all work
-- Link in the server, either through submodules, or something
-   - Look into providing a "release" zip that provides all this?
+- Unknown
 
 Default list of clans that are checked (Subject to name changes):  
 <pre>  
