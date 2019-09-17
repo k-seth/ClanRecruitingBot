@@ -31,8 +31,8 @@ BOT.on("message", async function(message) {\
         for (let playerId in list) {\
             let playerAndClan = list[playerId].nickname + " left " + list[playerId].clan;\
             playerAndClan = playerAndClan.replace(/_/g, "\\\\\\_");\
-            // Add inactive check\
-            reply += playerAndClan + "\\n<" + list[playerId].url + ">\\n";\
+            // Change formatting for the inactive check?\
+            reply += playerAndClan + "\\n<" + list[playerId].status + ">\\n";\
             // In the event that there is a large number of players, break it up into multiple messages to avoid breaking Discord\
             if(reply.length > CHAR_LIMIT) {\
                 message.channel.send(reply);\

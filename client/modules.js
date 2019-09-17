@@ -17,5 +17,4 @@
 import Discord from "discord.js";\
 const BOT = new Discord.Client();\
 const BOT_CONFIG = config.bot;\
-const CHAR_LIMIT = 1850 // Discord has a 2000 character limit. 1850 is to be safe\
-const EPOCH_WEEK = 604800;
+const CHAR_LIMIT = 1850 // Discord has a 2000 character limit. 1850 is to be safe

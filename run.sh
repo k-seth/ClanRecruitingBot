@@ -22,7 +22,7 @@
 cd ./app
 
 # Setup app
-sed -i "s|// Modules|$(sed -n '17,21 p' ./modules.js)|g" ./app.js
+sed -i "s|// Modules|$(sed -n '17,20 p' ./modules.js)|g" ./app.js
 sed -i "s|// Callback|$(sed -n '17,44 p' ./callback.js)|g" ./app.js
 
 mkdir -p ./historical
