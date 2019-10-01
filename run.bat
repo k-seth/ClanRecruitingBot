@@ -14,13 +14,18 @@
 :: You should have received a copy of the GNU General Public License
 :: along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-:: To consider
-:: Spawn a powershell environment, run a script there?
-:: use get-content to use in place of sed?
-
 :: Setup environment
+if exist .\client (
+    :: Should ensure that app.js is present.
+    :: Not optimal. This will insert all the filfe, including license
+    powershell -Command "& {$Callback = Get-Content -Path .\client\win\config.js; $Modules = Get-Content -Path .\client\win\config.js; $App = Get-Content -Path .\app\app.js; $App -replace '\\ Callback',$Callback | Set-Content -Path .\app\app.js; $App -replace '\\ Modules',$Modules | Set-Content -Path .\app\app.js}"
+    move .\client\*.json
+)
+if exist .\client erase .\client
 ren config_template.txt .\app\config.json
 cd .\app
+
+:: Setup app
 if not exist .\historical mkdir .\historical
 call npm install
 

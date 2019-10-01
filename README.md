@@ -48,6 +48,7 @@ This section outlines how to use the config_template.txt file to get the most ou
 
 #### Linux
 
+(Untested changes. Functioned on last test, and only made minor script changes)
 1. In terminal, navigate to the ClanRecruitingBot directory
 2. Enter "sh run.sh"
 3. The bot will now be active in Discord
@@ -60,7 +61,7 @@ Below is a list of issues I have encountered in my testing. If something comes u
   
 ### Known limitations  
   
-- Unknown
+- After a, currently undetermined and untested, period the bot can die. Output logging will be moved up the priority list (since the device I run the bot server on does not have a consistent monitor connection)
 
 Default list of clans that are checked (Subject to name changes):  
 <pre>  

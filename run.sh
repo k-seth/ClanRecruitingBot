@@ -17,7 +17,7 @@
 #!/bin/bash
 
 # Setup environment
-[ -d ./client ] && mv ./client/* ./app && rm -rf ./client
+[ -d ./client ] && mv ./client/unix/* ./app && mv ./client/*.json ./app && rm -rf ./client
 [ ! -f ./app/config.json ] && cp config_template.txt ./app/config.json
 cd ./app
 
