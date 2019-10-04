@@ -18,11 +18,16 @@
 if exist .\client (
     :: Should ensure that app.js is present.
     :: Not optimal. This will insert all the filfe, including license
-    powershell -Command "& {$Callback = Get-Content -Path .\client\win\config.js; $Modules = Get-Content -Path .\client\win\config.js; $App = Get-Content -Path .\app\app.js; $App -replace '\\ Callback',$Callback | Set-Content -Path .\app\app.js; $App -replace '\\ Modules',$Modules | Set-Content -Path .\app\app.js}"
-    move .\client\*.json
+    powershell -Command "& { $Modules = Get-Content -Path .\client\win\modules.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Modules',$Modules | Set-Content -Path .\app\app.js }"
+    powershell -Command "& { $Callback = Get-Content -Path .\client\win\callback.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Callback',$Callback | Set-Content -Path .\app\app.js; }"
+
+    copy .\client\*.json .\app
 )
-if exist .\client erase .\client
-ren config_template.txt .\app\config.json
+
+if exist .\client rmdir /q /s .\client
+
+ren config_template.txt config.json
+move .\config.json .\app
 cd .\app
 
 :: Setup app
