@@ -11,12 +11,15 @@ This repository focuses on providing a fully featured, but highly customizable, 
 
 For this program to function properly you will need some additional items.  
 1. Node.js installed on your system (https://nodejs.org/en/)
-2. An application_id from Wargaming's developer portal here: https://developers.wargaming.net/applications/  
+2. An application_id from Wargaming's developer portal here: https://developers.wargaming.net/applications/
    * This is specific to your account and should not be shared
-3. An app with a bot in your Discord server
+3. PowerShell 3.0 or higher (Windows 7 or earlier only)
+   * For anyone using Windows 8, 8.1 or 10, you will already have PowerShell 3 or greater, so you may disregard
+   * For those that are stubborn like myself, you will need to upgrade the version for the .bat file to run. New versions can be found here: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
+4. An app with a bot in your Discord server
    * You can follow these steps if needed: https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/
    * The bot needs to have have read message and send messages permissions
-4. In config_template.txt, change the value of "application_id" to your Wargaming developer id, and the value of "token" to your Discord bot token. Quotations are required around both
+5. In config_template.txt, change the value of "application_id" to your Wargaming developer id, and the value of "token" to your Discord bot token. Quotations are required around both 
  
 ### Configurables
 
@@ -41,16 +44,14 @@ This section outlines how to use the config_template.txt file to get the most ou
   
 #### Windows
 
-(Not currently working. Script is not set up)
 1. Navigate to the ClanRecruitingBot folder in the File Explorer
 2. Double click "run.bat"
 3. The bot will now be active in Discord
 
 #### Linux
 
-(Untested changes. Functioned on last test, and only made minor script changes)
 1. In terminal, navigate to the ClanRecruitingBot directory
-2. Enter "sh run.sh"
+2. Enter `sh run.sh`
 3. The bot will now be active in Discord
 
 ### Trouble shooting
@@ -62,6 +63,8 @@ Below is a list of issues I have encountered in my testing. If something comes u
 ### Known limitations  
   
 - After a, currently undetermined and untested, period the bot can die. Output logging will be moved up the priority list (since the device I run the bot server on does not have a consistent monitor connection)
+   * Turns out it isn't time based, so it may be usage based. Possibly a Raspberry Pi limitation
+- The Windows script adds the entire file, not just the part I am interested in 
 
 Default list of clans that are checked (Subject to name changes):  
 <pre>  

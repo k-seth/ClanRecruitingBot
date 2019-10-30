@@ -16,10 +16,9 @@
 
 :: Setup environment
 if exist .\client (
-    :: Should ensure that app.js is present.
-    :: Not optimal. This will insert all the filfe, including license
-    powershell -Command "& { $Modules = Get-Content -Path .\client\win\modules.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Modules',$Modules | Set-Content -Path .\app\app.js }"
-    powershell -Command "& { $Callback = Get-Content -Path .\client\win\callback.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Callback',$Callback | Set-Content -Path .\app\app.js; }"
+    :: Not optimal. This will insert all the file, including license. But, for the time being it will work
+    powershell -Command "& { $Modules = Get-Content -Raw -Path .\client\win\modules.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Modules',$Modules | Set-Content -Path .\app\app.js }"
+    powershell -Command "& { $Callback = Get-Content -Raw -Path .\client\win\callback.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Callback',$Callback | Set-Content -Path .\app\app.js; }"
 
     copy .\client\*.json .\app
 )
