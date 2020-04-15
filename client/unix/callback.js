@@ -26,12 +26,13 @@ BOT.on("message", async function(message) {\
     let list = await getNewRosters(runCheck);\
     if (list.success) {\
         message.channel.send(list.success);\
+    } else if (list.error) {\
+        message.channel.send(list.error);\
     } else {\
         let reply = "";\
         for (let playerId in list) {\
             let playerAndClan = list[playerId].nickname + " left " + list[playerId].clan;\
             playerAndClan = playerAndClan.replace(/_/g, "\\\\\\_");\
-            // Change formatting for the inactive check?\
             reply += playerAndClan + "\\n<" + list[playerId].status + ">\\n";\
             // In the event that there is a large number of players, break it up into multiple messages to avoid breaking Discord\
             if(reply.length > CHAR_LIMIT) {\

@@ -23,14 +23,14 @@ For this program to function properly you will need some additional items.
  
 ### Configurables
 
-This section outlines how to use the config_template.txt file to get the most out of the application. REQUIRED fields are ones you must edit, OPTIONAL are if you wish to personalize your app, such as adding new clans or changing servers
+This section outlines how to use the config_template.txt file to get the most out of the application. REQUIRED fields are ones you must edit, OPTIONAL are if you wish to personalize your app, such as adding new clans or changing servers. All fields are required to be present in the configuration file.
 
 1. "application_id": "Your App ID"
    * REQUIRED. How you access the Wargaming API
 2. "inactive_weeks": 2
    * OPTIONAL, default = 2. The number of weeks since last battle before a player is labelled as inactive. Value must be 1 or greater
 3. "server": "na"
-   * OPTIONAL, default = "na". The game server that the data is taken from. Valid values: "na", "ru", "eu", "asia". If you change the server from na, you will need to redo the clan list
+   * OPTIONAL, default = "na". The game server that the data is taken from. Valid values: "na", "ru", "eu", "sea". If you change the server from na, you will need to redo the clan list
 4. "token": "Your bot token"
    * REQUIRED. How you access your Discord bot
 5. "seed": "!new"
@@ -39,7 +39,6 @@ This section outlines how to use the config_template.txt file to get the most ou
    * OPTIONAL, default = "!left" The command to update the clan information and post it in Discord
 7. "clanlist": [ clan list ]
    * OPTIONAL, default = see bottom, all NA clans. The list of clans that are checked by the the bot. You can add additional clans, all you need is the clan's id.
-
 ### Using the program  
   
 #### Windows
@@ -63,8 +62,9 @@ Below is a list of issues I have encountered in my testing. If something comes u
 ### Known limitations  
   
 - After a, currently undetermined and untested, period the bot can die. Output logging will be moved up the priority list (since the device I run the bot server on does not have a consistent monitor connection)
-   * Turns out it isn't time based, so it may be usage based. Possibly a Raspberry Pi limitation
-- The Windows script adds the entire file, not just the part I am interested in 
+   * This may actual be a result of bad handling of information returned by the API - New handling will hopefully fix this
+- The Windows script adds the entire file, not just the part I am interested in
+   * This is not a priority, as it only really matters to me, anyone using it is unlikely to notice
 
 Default list of clans that are checked (Subject to name changes):  
 <pre>  
