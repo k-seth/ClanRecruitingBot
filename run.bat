@@ -15,16 +15,6 @@
 :: along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 :: Setup environment
-if exist .\client (
-    :: Not optimal. This will insert all the file, including license. But, for the time being it will work
-    powershell -Command "& { $Modules = Get-Content -Raw -Path .\client\win\modules.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Modules',$Modules | Set-Content -Path .\app\app.js }"
-    powershell -Command "& { $Callback = Get-Content -Raw -Path .\client\win\callback.js; $App = Get-Content -Path .\app\app.js; $App -replace '// Callback',$Callback | Set-Content -Path .\app\app.js; }"
-
-    copy .\client\*.json .\app
-)
-
-if exist .\client rmdir /q /s .\client
-
 ren config_template.txt config.json
 move .\config.json .\app
 cd .\app

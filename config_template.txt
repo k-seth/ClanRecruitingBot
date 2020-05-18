@@ -1,13 +1,17 @@
 {
     "app": {
-        "application_id": "Your App ID",
+        "application_id": "App ID",
         "inactive_weeks": 2,
         "server": "na"
     },
     "bot": {
-        "token": "Your bot token",
+        "token": "Bot token",
         "seed": "!new",
-        "command": "!left"
+        "check": "!left",
+        "list": "!show",
+        "add": "!add",
+        "remove": "!remove",
+        "help": "!help"
     },
     "clanlist": [
         1000016749,

@@ -17,13 +17,8 @@
 #!/bin/bash
 
 # Setup environment
-[ -d ./client ] && mv ./client/unix/* ./app && mv ./client/*.json ./app && rm -rf ./client
 [ ! -f ./app/config.json ] && cp config_template.txt ./app/config.json
-cd ./app
-
-# Setup app
-sed -i "s|// Modules|$(sed -n '17,20 p' ./modules.js)|g" ./app.js
-sed -i "s|// Callback|$(sed -n '17,46 p' ./callback.js)|g" ./app.js
+cd ./app || exit
 
 mkdir -p ./historical
 npm install
