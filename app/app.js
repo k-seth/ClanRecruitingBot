@@ -32,26 +32,26 @@ const HISTORICAL = "./historical/oldClanRosters";
 const WOTLABS = "https://wotlabs.net/" + APP.server + "/player/";
 
 // Startup critical error constants
-const CRT_API = { critical : "An API key must be given (Non-null, not default value)" };
-const CRT_BOT = { critical : "A Discord bot token must be given (Non-null, not default value)" };
-const CRT_RGN = { critical : "An invalid region has been selected (Must be one of: 'na', 'eu', 'ru' or 'sea')" };
-const CRT_FORM = { critical : "The configuration file is incorrectly formatted or missing parameters" };
+const CRT_API = { critical: "An API key must be given (Non-null, not default value)" };
+const CRT_BOT = { critical: "A Discord bot token must be given (Non-null, not default value)" };
+const CRT_RGN = { critical: "An invalid region has been selected (Must be one of: 'na', 'eu', 'ru' or 'sea')" };
+const CRT_FORM = { critical: "The configuration file is incorrectly formatted or missing parameters" };
 
 // Startup warning constants
-const WRN_ACTV = { warning : "An invalid value has been provided for the inactivity period. This feature will be disabled" };
-const WRN_CLAN = { warning : "The list of clans is empty -- No data will be checked" };
+const WRN_ACTV = { warning: "An invalid value has been provided for the inactivity period. This feature will be disabled" };
+const WRN_CLAN = { warning: "The list of clans is empty -- No data will be checked" };
 const WRN_CMD = { warning: "One or more Discord commands are empty. Proper functionality will likely be impaired" };
-const WRN_RGN = { warning : "Server has changed from default. Ensure clan list has been updated" };
+const WRN_RGN = { warning: "Server has changed from default. Ensure clan list has been updated" };
 
 // Runtime error constants
-const ERR_API = { result : "An unexpected error occurred contacting the Wargaming API" };
-const ERR_RTN = { result : "An unexpected error occurred with the data returned by Wargaming" };
+const ERR_API = { result: "An unexpected error occurred contacting the Wargaming API" };
+const ERR_RTN = { result: "An unexpected error occurred with the data returned by Wargaming" };
 
 // Success constants
-const OK_EPTY = { result : "No clans supplied. No action taken" };
-const OK_NEW = { result : "New data has been saved" };
-const OK_NONE = { result : "No players have left any tracked clans" };
-const OK_UPDT = { result : "Successfully completed operation. Member data will be updated on next check" };
+const OK_EPTY = { result: "No clans supplied. No action taken" };
+const OK_NEW = { result:  "New data has been saved" };
+const OK_NONE = { result: "No players have left any tracked clans" };
+const OK_UPDT = { result: "Successfully completed operation. Member data will be updated on next check" };
 
 // Other constants
 const CHAR_LIMIT = 1850 // Discord has a 2000 character limit. 1850 is to be safe
@@ -116,9 +116,14 @@ BOT.on("message", async function(message) {
 
 // CORE FUNCTIONS
 
-// A function which adds the given clans to the list of tracked clans
-// In:  messageArray - An array representing the message sent in Discord
-// Out: Returns an array which includes the result JSON and an array of invalid clans
+/**
+ * A function which adds the given clans to the list of tracked clans
+ *
+ * @param messageArray
+ *      An array representing the message sent in Discord
+ * @returns {Promise<({result: string}|[])[]>}
+ *      Returns an array which includes the result JSON and an array of invalid clans
+ */
 async function addNewClans(messageArray) {
     const invalidClans = [];
 
@@ -139,9 +144,15 @@ async function addNewClans(messageArray) {
     return [OK_UPDT, invalidClans];
 }
 
-// An async function which makes an API call to get the names of all the and then constructs and returns the message for the app
-// In:  leftPlayers - A JSON containing the account id and former clan of of all players that have left in the given period
-// Out: Returns a JSON representing the names and clans of all players that left, or a generic message if none
+/**
+ * An async function which makes an API call to get the names of all the and then constructs and returns the message
+ * for the app
+ *
+ * @param leftPlayers
+ *      A JSON containing the account id and former clan of of all players that have left in the given period
+ * @returns {Promise<{error}|T|{result: string}|{}>}
+ *      Returns a JSON representing the names and clans of all players that left, or a generic message if none
+ */
 async function constructNameList(leftPlayers) {
     const playersList = Object.keys(leftPlayers);
     const nameList = {};
@@ -159,7 +170,7 @@ async function constructNameList(leftPlayers) {
         Object.assign(nameList, json.data);
     }
 
-    // For all players remaining in the list, get and add their former clan tag and wotlabs url to the data returned from API call
+    // Get and add player's former clan tag and wotlabs url to the data returned from API call
     for (let playerId in nameList) {
         if (nameList[playerId] === null) {
             delete nameList[playerId];
@@ -177,9 +188,15 @@ async function constructNameList(leftPlayers) {
     return nameList;
 }
 
-// An async function which will call the API and get up-to-date clan rosters
-// In:  check - A boolean representing whether or not a full roster check should be completed
-// Out: Returns a JSON representing the completion state of the program, either a generic success message or a list of players that have left their clan
+/**
+ * An async function which will call the API and get up-to-date clan rosters
+ *
+ * @param check
+ *      A boolean representing whether or not a full roster check should be completed
+ * @returns {Promise<{error}|T|{result: string}|*>}
+ *      Returns a JSON representing the completion state of the program, either a generic success message or a list of
+ *      players that have left their clan
+ */
 async function getNewRosters(check) {
     const clanData = {};
 
@@ -200,9 +217,14 @@ async function getNewRosters(check) {
     return await updateRosters(simplifyRoster(clanData), check);
 }
 
-// A function which removes the given clans from the list of tracked clans
-// In:  messageArray - An array representing the message sent in Discord
-// Out: Returns an array which includes the result JSON and an array of invalid clans
+/**
+ * A function which removes the given clans from the list of tracked clans
+ *
+ * @param messageArray
+ *      An array representing the message sent in Discord
+ * @returns {Promise<({result: string}|[])[]>}
+ *      Returns an array which includes the result JSON and an array of invalid clans
+ */
 async function removeExistingClans(messageArray) {
     const invalidClans = [];
 
@@ -220,18 +242,28 @@ async function removeExistingClans(messageArray) {
     return [OK_UPDT, invalidClans];
 }
 
-// A function which provides a user readable list of all clans currently being tracked
-// In:  None
-// Out: Returns an array of all tracked clans
+/**
+ * A function which provides a user readable list of all clans currently being tracked
+ *
+ * @returns {Promise<[]>}
+ *      Returns an array of all tracked clans
+ */
 async function showClanList() {
     // TODO: Formalize this, have clan names shown as well
     return CLAN_LIST;
 }
 
-// A function which reads historical data and writes the new rosters to file. Returns the list of players that left their respective clans
-// In:  newRoster - The data from an API call in the form of an object holding the new player data
-//      check - A boolean representing whether a full check should be completed
-// Out: Returns a JSON containing all players that have left, or a generic message
+/**
+ * A function which reads historical data and writes the new rosters to file. Returns the list of players that left
+ * their respective clans
+ *
+ * @param simplifiedNew
+ *      The data from an API call in the form of an object holding the new player data
+ * @param check
+ *      A boolean representing whether a full check should be completed
+ * @returns {Promise<{result: string}|*>}
+ *      Returns a JSON containing all players that have left, or a generic message
+ */
 async function updateRosters(simplifiedNew, check) {
     let simplifiedOld = {};
 
@@ -246,10 +278,10 @@ async function updateRosters(simplifiedNew, check) {
         return OK_NEW;
     }
 
-    // Compare simplifiedOld to simplifiedNew, and remove any occurrences that exist in both with the same clan tag
-    // This should leave only those players in simplifiedOld that are still in a/the same clan
+    // Compare simplifiedOld to simplifiedNew, and remove any overlap that exists
+    // Same clan does not matter, as someone who has left and joined a new clan can not be recruited anyway
     for (let playerId in simplifiedOld) {
-        if (playerId in simplifiedNew && simplifiedOld[playerId].clan_id === simplifiedNew[playerId].clan_id) {
+        if (playerId in simplifiedNew) {
             delete simplifiedOld[playerId];
         }
     }
@@ -259,41 +291,53 @@ async function updateRosters(simplifiedNew, check) {
 
 // API CALL FUNCTIONS
 
-// A simple API call using fetch. Uses POST to ensure data does not exceed URL length
-// In:  url  - The url to which to fetch the data from
-//      body - The body data to be sent. JSON encoded as URLSearchParams
-// Out: Returns a JSON which is expected to be returned by the Wargaming API
+/**
+ * A simple API call using fetch. Uses POST to ensure data does not exceed URL length
+ *
+ * @param url
+ *      The url to which to fetch the data from
+ * @param body
+ *      The body data to be sent. JSON encoded as URLSearchParams
+ * @returns {Promise<T|{result: string}>}
+ *      Returns a JSON which is expected to be returned by the Wargaming API
+ */
 async function callApi(url, body) {
     return await fetch(url, {
         method: "post",
         body: body,
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
-    })
-        .then(async res => {
-            const response = await res.json();
-            return response.status === "error" ? ERR_RTN : response;
-        })
-        .catch(() => {
-            return ERR_API;
-        });
+    }).then(async res => {
+        const response = await res.json();
+        return response.status === "error" ? ERR_RTN : response;
+    }).catch(() => {
+        return ERR_API;
+    });
 }
 
 // HELPER FUNCTIONS
 
-// Helper function for removing players in clans no longer being tracked by the application
-// In:  simplifiedOld - The roster read back from the saved file
-// Out: Returns a minimized version of the simplifiedOld roster
+/**
+ * Helper function for removing players in clans no longer being tracked by the application
+ *
+ * @param simplifiedOld
+ *      The roster read back from the saved file
+ */
 function checkChanges(simplifiedOld) {
     for (let playerId in simplifiedOld) {
-        if (!CLAN_LIST.includes(parseInt(simplifiedOld[playerId].clan_id))) { // Convert from string to int to be able to make comparison
+        if (!CLAN_LIST.includes(parseInt(simplifiedOld[playerId].clan_id))) {
             delete simplifiedOld[playerId];
         }
     }
 }
 
-// Helper function for assigning the correct values for the various regions. Used for completing API url
-// In:  region - The server specified in the config that the data will work off of
-// Out: Returns the necessary top level domain information
+/**
+ * Helper function for assigning the correct values for the various regions. Used for completing API url
+ *
+ * @param region
+ *      The server specified in the config that the data will work off of
+ * @returns {string}
+ *      Returns the necessary top level domain information
+ */
 function determineRegionValues(region) {
     switch (region.toLowerCase()) {
         case "na":
@@ -307,9 +351,12 @@ function determineRegionValues(region) {
     }
 }
 
-// Helper function for determining which list of clans to use. Uses modified list if it exists
-// In:  None
-// Out: Returns a promise containing the list of clans that will be initially loaded for tracking
+/**
+ * Helper function for determining which list of clans to use. Uses modified list if it exists
+ *
+ * @returns {Promise<any|[]>}
+ *      Returns a promise containing the list of clans that will be initially loaded for tracking
+ */
 async function findClanlist() {
     // TODO: Validate this list
     if (existsSync(TRACKED_CLANS)) {
@@ -321,16 +368,21 @@ async function findClanlist() {
     }
 }
 
-// Helper function for converting the roster from Wargaming's API to a more efficient format
-// In:  newRoster - The JSON returned by the Wargaming API with up-to-date clan data
-// Out: Returns a simplified version of the newRoster
+/**
+ * Helper function for converting the roster from Wargaming's API to a more efficient format
+ *
+ * @param newRoster
+ *      The JSON returned by the Wargaming API with up-to-date clan data
+ * @returns {{}}
+ *      Returns a simplified version of the newRoster
+ */
 function simplifyRoster(newRoster) {
     let simplifiedNew = {};
 
     for (let clanId in newRoster) {
         let tag = newRoster[clanId].tag;
         for (let playerIndex in newRoster[clanId].members) {
-            simplifiedNew[newRoster[clanId].members[playerIndex].account_id] = { clan_id : clanId, clan_tag : tag };
+            simplifiedNew[newRoster[clanId].members[playerIndex].account_id] = { clan_id: clanId, clan_tag: tag };
         }
 
         delete newRoster[clanId]
