@@ -6,12 +6,13 @@
     },
     "bot": {
         "token": "Bot token",
-        "seed": "!new",
-        "check": "!left",
-        "list": "!show",
-        "add": "!add",
-        "remove": "!remove",
-        "help": "!help"
+        "prefix": "!",
+        "seed": "new",
+        "check": "left",
+        "list": "show",
+        "add": "add",
+        "remove": "remove",
+        "help": "help"
     },
     "clanlist": [
         1000016749,
