@@ -24,4 +24,4 @@ mkdir -p ./historical
 npm install
 
 # Run server
-node -r esm ./app.js
+npm start

@@ -16,9 +16,13 @@
 
 // The modules imported by the server
 import config from "./config.json";
-import { createWriteStream, existsSync, readFileSync } from "fs";
-import fetch from "node-fetch";
+import { createWriteStream, readFileSync } from "fs";
 import Discord from "discord.js";
+
+// Helper module imports
+import { Helper } from "./modules/helper";
+import { chunkedApiCall } from "./modules/api";
+import { Core } from "./modules/core";
 
 // Config constants
 const APP = config.app;
@@ -27,26 +31,9 @@ const BOT_CONFIG = config.bot;
 const PREFIX = BOT_CONFIG.prefix;
 
 // Path constants
-const API = `https://api.worldoftanks${determineRegionValues(APP.server)}`;
+const API = `https://api.worldoftanks${Helper.determineRegionValues(APP.server)}`;
 const TRACKED_CLANS = "./clan_list.json";
 const HISTORICAL = "./historical/oldClanRosters";
-const WOTLABS = `https://wotlabs.net/${APP.server}/player/`;
-
-// Startup critical error constants
-const CRT_API = { critical: "An API key must be given (Non-null, not default value)" };
-const CRT_BOT = { critical: "A Discord bot token must be given (Non-null, not default value)" };
-const CRT_RGN = { critical: "An invalid region has been selected (Must be one of: 'na', 'eu', 'ru' or 'sea')" };
-const CRT_FORM = { critical: "The configuration file is incorrectly formatted or missing parameters" };
-
-// Startup warning constants
-const WRN_ACTV = { warning: "An invalid value has been provided for the inactivity period. This feature will be disabled" };
-const WRN_CLAN = { warning: "The list of clans is empty -- No data will be checked" };
-const WRN_CMD = { warning: "One or more Discord commands are empty. Proper functionality will likely be impaired" };
-const WRN_RGN = { warning: "Server has changed from default. Ensure clan list has been updated" };
-
-// Runtime error constants
-const ERR_API = { result: "An unexpected error occurred contacting the Wargaming API" };
-const ERR_RTN = { result: "An unexpected error occurred with the data returned by Wargaming" };
 
 // Success constants
 const OK_EPTY = { result: "No clans supplied. No action taken" };
@@ -57,11 +44,10 @@ const OK_UPDT = { result: "Successfully completed operation. Member data will be
 // Other constants
 const CHAR_LIMIT = 1850 // Discord has a 2000 character limit. 1850 is to be safe
 let CLAN_LIST = [];
-findClanlist().then(promise => CLAN_LIST = promise)
+findClanlist().then(promise => CLAN_LIST = promise);
 const BOT = new Discord.Client();
-const EPOCH_WEEK = 604800;
-const MAX_API_SIZE = 100;
 
+const core = new core();
 // DISCORD FUNCTIONS
 
 BOT.login(BOT_CONFIG.token);
@@ -122,8 +108,12 @@ BOT.on("message", async function(message) {
  *      A JSON representing the names and clans of all players that left, or a generic message if none
  */
 async function constructNameList(leftPlayers) {
+    const WOTLABS = `https://wotlabs.net/${APP.server}/player/`;
+    const EPOCH_WEEK = 604800;
+
     const playersList = Object.keys(leftPlayers);
-    const nameList = await chunkedApiCall(playersList, "/wot/account/info/", "account_id", "nickname,last_battle_time");
+    const nameList = await chunkedApiCall(playersList, `${API}/wot/account/info/`, "account_id",
+                                    "nickname,last_battle_time", APP.application_id);
     if (nameList.result) {
         return nameList;
     }
@@ -162,7 +152,7 @@ function updateRosters(simplifiedNew, check) {
 
     if (check) {
         simplifiedOld = JSON.parse(readFileSync(HISTORICAL, "utf-8"));
-        checkChanges(simplifiedOld);
+        checkChanges(simplifiedOld, CLAN_LIST);
     }
 
     createWriteStream(HISTORICAL).write(JSON.stringify(simplifiedNew), "utf-8");
@@ -192,12 +182,13 @@ function updateRosters(simplifiedNew, check) {
  */
 async function updateData(check) {
     // API has a cap of 100 clans in a single call, so split up the array and make separate calls
-    const clanList = await chunkedApiCall(CLAN_LIST, "/wot/clans/info/", "clan_id", "members.account_id,tag");
+    const clanList = await chunkedApiCall(CLAN_LIST, `${API}/wot/clans/info/`, "clan_id",
+                                    "members.account_id,tag", APP.application_id);
     if (clanList.result) {
         return clanList;
     }
 
-    const simplifiedOld = updateRosters(simplifyRoster(clanList), check);
+    const simplifiedOld = updateRosters(Helper.simplifyRoster(clanList), check);
     if (!Object.keys(simplifiedOld).length) {
         return OK_NONE;
     } else if (simplifiedOld.result) {
@@ -263,7 +254,8 @@ async function removeExistingClans(clansToRemove) {
  *      An array containing the id and tag of all tracked clans
  */
 async function showClanList() {
-    const returnedData = await chunkedApiCall(CLAN_LIST, "/wot/clans/info/", "clan_id", "tag");
+    const returnedData = await chunkedApiCall(CLAN_LIST, `${API}/wot/clans/info/`, "clan_id",
+                                        "tag", APP.application_id);
     if (returnedData.result) {
         return returnedData;
     }
@@ -274,149 +266,4 @@ async function showClanList() {
     }
 
     return { result: clanListWithTag };
-}
-
-// API CALL FUNCTIONS
-
-/**
- * A simple API call using fetch. Uses POST to ensure data does not exceed URL length
- *
- * @param url
- *      The url to which to fetch the data from
- * @param body
- *      The body data to be sent. JSON encoded as URLSearchParams
- * @returns {Promise<T|{result: string}>}
- *      A JSON which is expected to be returned by the Wargaming API
- */
-async function callApi(url, body) {
-    return await fetch(url, {
-        method: "post",
-        body: body,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" }
-    }).then(async res => {
-        const response = await res.json();
-        return response.status === "error" ? ERR_RTN : response;
-    }).catch(() => ERR_API);
-}
-
-/**
- * Helper function to make chunked calls to the API to prevent making calls that are too large.
- *
- * @param data
- *      The array of data that needs to be chunked
- * @param url
- *      The URL for calling the API
- * @param request_id
- *      The name of the id associated with the API call. Used as the key name in the request parameters
- * @param fields
- *      The fields to include in the response from the API
- * @returns {Promise<{}|T|{result: string}>}
- *      An object containing all the data from the API calls
- */
-async function chunkedApiCall(data, url, request_id, fields) {
-    const apiData = {};
-    for (let i = 0; i < data.length; i += MAX_API_SIZE) {
-        const dataChunk = data.slice(i, i + MAX_API_SIZE).join();
-
-        const bodyObj = { application_id: APP.application_id, [request_id]: dataChunk, fields: fields };
-        const json = await callApi(`${API}${url}`, new URLSearchParams(bodyObj));
-        if (json.result) {
-            return json;
-        }
-
-        Object.assign(apiData, json.data);
-    }
-    return apiData;
-}
-
-// HELPER FUNCTIONS
-
-/**
- * Helper function for removing players in clans no longer being tracked by the application
- *
- * @param simplifiedOld
- *      The roster read back from the saved file
- */
-function checkChanges(simplifiedOld) {
-    for (const playerId in simplifiedOld) {
-        if (!CLAN_LIST.includes(parseInt(simplifiedOld[playerId].clan_id))) {
-            delete simplifiedOld[playerId];
-        }
-    }
-}
-
-/**
- * Helper function for assigning the correct values for the various regions. Used for completing API URL
- *
- * @param region
- *      The server specified in the config that the data will work off of
- * @returns {string}
- *      The necessary top level domain information
- */
-function determineRegionValues(region) {
-    switch (region.toLowerCase()) {
-        case "na":
-            return ".com";
-        case "eu":
-            return ".eu";
-        case "ru":
-            return ".ru";
-        case "sea":
-            return ".asia";
-    }
-}
-
-/**
- * Helper function for determining which list of clans to use. Uses modified list if it exists
- *
- * @returns {Promise<any|[]>}
- *      A promise containing the list of clans that will be initially loaded for tracking
- */
-async function findClanlist() {
-    // TODO: Validate this list
-    if (existsSync(TRACKED_CLANS)) {
-        return import(TRACKED_CLANS).then((list) => {
-            return list.clanlist;
-        })
-    }
-    return config.clanlist;
-}
-
-/**
- * Helper function for converting the roster from Wargaming's API to a more efficient format
- *
- * @param newRoster
- *      The JSON returned by the Wargaming API with up-to-date clan data
- * @returns {{}}
- *      A simplified version of the newRoster
- */
-function simplifyRoster(newRoster) {
-    const simplifiedNew = {};
-
-    for (const clanId in newRoster) {
-        let tag = newRoster[clanId].tag;
-        for (let playerIndex in newRoster[clanId].members) {
-            simplifiedNew[newRoster[clanId].members[playerIndex].account_id] = { clan_id: clanId, clan_tag: tag };
-        }
-
-        delete newRoster[clanId]
-    }
-    return simplifiedNew;
-}
-
-// Helper function to ensure that critical configuration data is available before startup.
-// Checks for:
-//      Fields: Not all present or unreadable   - Critical error
-//      API Key: Empty or default               - Critical error
-//      Discord Token: Empty or default         - Critical error
-//      Server: Invalid server                  - Critical error
-//              Modified                        - Warning
-//      Inactive: Invalid value                 - Warning
-//      Seed: Empty                             - Warning
-//      Command: Empty                          - Warning
-//      Clan List: Empty                        - Warning
-// In:  None
-// Out: A boolean representing whether or not a startup can proceed
-function validateConfiguration() {
-    console.error(ERR_RGN);
 }

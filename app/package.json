@@ -9,9 +9,22 @@
   "main": "app.js",
   "author": "Seth Kuipers",
   "license": "GPL-3.0",
+  "type": "module",
   "dependencies": {
     "discord.js": "^11.5.1",
     "esm": "^3.2.25",
     "node-fetch": "^2.6.0"
+  },
+  "scripts": {
+    "start": "node -r esm ./app.js",
+    "test": "ava"
+  },
+  "devDependencies": {
+    "ava": "^3.11.1"
+  },
+  "ava": {
+    "nodeArguments": [
+      "--experimental-modules"
+    ]
   }
 }

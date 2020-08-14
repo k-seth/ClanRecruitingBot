@@ -24,6 +24,6 @@ if not exist .\historical mkdir .\historical
 call npm install
 
 :: Run server
-node -r esm app.js
+call npm start
 
 PAUSE
