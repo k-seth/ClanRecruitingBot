@@ -1,9 +1,5 @@
 import fetch from "node-fetch";
 
-const MAX_API_SIZE = 100;
-const ERR_API = { result: "An unexpected error occurred contacting the Wargaming API" };
-const ERR_RTN = { result: "An unexpected error occurred with the data returned by Wargaming" };
-
 /**
  * A simple API call using fetch. Uses POST to ensure data does not exceed URL length
  *
@@ -14,7 +10,10 @@ const ERR_RTN = { result: "An unexpected error occurred with the data returned b
  * @returns {Promise<T|{result: string}>}
  *      A JSON which is expected to be returned by the Wargaming API
  */
-async function callApi(url, body) {
+export async function callApi(url, body) {
+    const ERR_API = { result: "An unexpected error occurred contacting the Wargaming API" };
+    const ERR_RTN = { result: "An unexpected error occurred with the data returned by Wargaming" };
+
     return await fetch(url, {
         method: "post",
         body: body,
@@ -43,6 +42,8 @@ async function callApi(url, body) {
  */
 export async function chunkedApiCall(data, url, requestId, fields, appId) {
     const apiData = {};
+    const MAX_API_SIZE = 100;
+
     for (let i = 0; i < data.length; i += MAX_API_SIZE) {
         const dataChunk = data.slice(i, i + MAX_API_SIZE).join();
 

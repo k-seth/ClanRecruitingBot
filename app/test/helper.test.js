@@ -1,30 +1,109 @@
 import { Helper } from "../modules/helper.js";
 import test from "ava";
 
-test('determineRegionValues na', t => {
+test('checkChanges null simplifiedOld', t => {
+    const helper = new  Helper(null);
+    const simplifiedOld = null;
+    helper.checkChanges(simplifiedOld);
+
+    t.is(simplifiedOld, null);
+});
+
+test('checkChanges empty simplifiedOld', t => {
+    const helper = new  Helper(null);
+    const simplifiedOld = {};
+    helper.checkChanges(simplifiedOld);
+
+    t.deepEqual(simplifiedOld, {});
+});
+
+test('checkChanges no changes simplifiedOld', t => {
+    const helper = new  Helper({
+        "clanlist": [ 2000000000 ]
+    });
+    const simplifiedOld = {
+        "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
+    };
+    const expected = {
+        "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
+    };
+
+    helper.checkChanges(simplifiedOld);
+
+    t.deepEqual(simplifiedOld, expected);
+});
+
+test('checkChanges removed clan simplifiedOld', t => {
+    const helper = new  Helper({
+        "clanlist": [ 2000000000 ]
+    });
+    const simplifiedOld = {
+        "1000000000": { clan_id: "2000000000", clan_tag: "TEST" },
+        "1000000001": { clan_id: "2000000001", clan_tag: "TEST2" }
+    };
+    const expected = {
+        "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
+    };
+
+    helper.checkChanges(simplifiedOld);
+
+    t.deepEqual(simplifiedOld, expected);
+});
+
+test('checkChanges add clan simplifiedOld', t => {
+    const helper = new  Helper({
+        "clanlist": [ 2000000000, 2000000001 ]
+    });
+    const simplifiedOld = {
+        "1000000000": { clan_id: "2000000000", clan_tag: "TEST" },
+    };
+    const expected = {
+        "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
+    };
+
+    helper.checkChanges(simplifiedOld);
+
+    t.deepEqual(simplifiedOld, expected);
+});
+
+
+test('findClanlist default list', async t => {
+    const helper = new  Helper({
+        "clanlist": [ 2000000000, 2000000001 ]
+    });
+    const expected = [ 2000000000, 2000000001 ];
+
+    const list = await helper.findClanlist();
+
+    t.deepEqual(list, expected);
+});
+
+test.todo('findClanlist list from file');
+
+
+test('determineRegionValues na server', t => {
     const actual = Helper.determineRegionValues("na");
     t.is(actual, ".com");
 });
 
-test('determineRegionValues eu', t => {
+test('determineRegionValues eu server', t => {
     const actual = Helper.determineRegionValues("eu");
     t.is(actual, ".eu");
 });
 
-test('determineRegionValues ru', t => {
+test('determineRegionValues ru server', t => {
     const actual = Helper.determineRegionValues("ru");
     t.is(actual, ".ru");
 });
 
-test('determineRegionValues sea', t => {
+test('determineRegionValues sea server', t => {
     const actual = Helper.determineRegionValues("sea");
     t.is(actual, ".asia");
 });
 
-// For some reason this is failing to catch the thrown error, despite reporting
-//  that an error was in fact thrown
-test.failing('determineRegionValues invalid', t => {
-    t.throws(Helper.determineRegionValues("sa"));
+test('determineRegionValues invalid server', t => {
+    const error = t.throws(() => { Helper.determineRegionValues("sa") }, {instanceOf: Error});
+    t.is(error.message, "Invalid region selected");
 });
 
 

@@ -2,8 +2,8 @@ import { existsSync } from "fs";
 
 export class Helper {
     static TRACKED_CLANS = "../clan_list.json";
-
-    constructor() {
+    constructor(config) {
+        this.config = config;
     }
 
     /**
@@ -35,7 +35,7 @@ export class Helper {
                 return list.clanlist;
             })
         }
-        return config.clanlist;
+        return this.config.clanlist;
     }
 
     /**

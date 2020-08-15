@@ -1,7 +1,11 @@
-// import { determineRegionValues } from "../modules/helper.js";
-// import test from "ava";
-//
-// test('determineRegionValues na', t => {
-//     const actual = determineRegionValues("na");
-//     t.is(actual, ".com");
-// });
+import { callApi, chunkedApiCall } from "../modules/api";
+import test from "ava";
+
+test.todo('callApi returns data');
+test.todo('chunkedApiCall returns api error');
+test.todo('chunkedApiCall returns data error');
+
+
+test.todo('chunkedApiCall single chunk');
+test.todo('chunkedApiCall multiple chunks');
+test.todo('chunkedApiCall returned error');
