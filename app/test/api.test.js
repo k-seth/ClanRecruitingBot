@@ -1,4 +1,3 @@
-import { callApi, chunkedApiCall } from "../modules/api";
 import test from "ava";
 
 test.todo('callApi returns data');

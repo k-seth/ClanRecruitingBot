@@ -6,7 +6,7 @@ export class Core {
     static OK_NEW = { result:  "New data has been saved" };
     static OK_NONE = { result: "No players have left any tracked clans" };
     static OK_UPDT = { result: "Successfully completed operation. Member data will be updated on next check" };
-    static HISTORICAL = "../historical/oldClanRosters";
+    static HISTORICAL = "./historical/oldClanRosters";
 
     constructor(config) {
         this.config = config;
@@ -108,7 +108,7 @@ export class Core {
             return clanData;
         }
 
-        const simplifiedOld = this.updateRosters(Helper.simplifyRoster(this.clanList), check);
+        const simplifiedOld = this.updateRosters(Helper.simplifyRoster(clanData), check);
         if (!Object.keys(simplifiedOld).length) {
             return Core.OK_NONE;
         } else if (simplifiedOld.result) {

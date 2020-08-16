@@ -18,9 +18,8 @@ test('checkChanges empty simplifiedOld', t => {
 });
 
 test('checkChanges no changes simplifiedOld', t => {
-    const helper = new  Helper({
-        "clanlist": [ 2000000000 ]
-    });
+    const helper = new  Helper(null);
+    const clanList = [ 2000000000 ];
     const simplifiedOld = {
         "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
     };
@@ -28,15 +27,14 @@ test('checkChanges no changes simplifiedOld', t => {
         "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
     };
 
-    helper.checkChanges(simplifiedOld);
+    helper.checkChanges(simplifiedOld, clanList);
 
     t.deepEqual(simplifiedOld, expected);
 });
 
 test('checkChanges removed clan simplifiedOld', t => {
-    const helper = new  Helper({
-        "clanlist": [ 2000000000 ]
-    });
+    const helper = new  Helper(null);
+    const clanList = [ 2000000000 ];
     const simplifiedOld = {
         "1000000000": { clan_id: "2000000000", clan_tag: "TEST" },
         "1000000001": { clan_id: "2000000001", clan_tag: "TEST2" }
@@ -45,15 +43,14 @@ test('checkChanges removed clan simplifiedOld', t => {
         "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
     };
 
-    helper.checkChanges(simplifiedOld);
+    helper.checkChanges(simplifiedOld, clanList);
 
     t.deepEqual(simplifiedOld, expected);
 });
 
-test('checkChanges add clan simplifiedOld', t => {
-    const helper = new  Helper({
-        "clanlist": [ 2000000000, 2000000001 ]
-    });
+test('checkChanges added clan simplifiedOld', t => {
+    const helper = new  Helper(null);
+    const clanList = [ 2000000000, 2000000001 ];
     const simplifiedOld = {
         "1000000000": { clan_id: "2000000000", clan_tag: "TEST" },
     };
@@ -61,7 +58,7 @@ test('checkChanges add clan simplifiedOld', t => {
         "1000000000": { clan_id: "2000000000", clan_tag: "TEST" }
     };
 
-    helper.checkChanges(simplifiedOld);
+    helper.checkChanges(simplifiedOld, clanList);
 
     t.deepEqual(simplifiedOld, expected);
 });
