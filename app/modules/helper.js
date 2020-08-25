@@ -1,7 +1,8 @@
 import { existsSync } from "fs";
+import * as path from "path";
 
 export class Helper {
-    static TRACKED_CLANS = "../clan_list.json";
+    static TRACKED_CLANS = path.join(__dirname, "..", "clan_list.json");
     constructor(config) {
         this.config = config;
     }
