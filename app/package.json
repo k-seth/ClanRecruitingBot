@@ -12,14 +12,15 @@
   "dependencies": {
     "discord.js": "^11.5.1",
     "esm": "^3.2.25",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.1"
   },
   "scripts": {
     "start": "node -r esm ./app.js",
     "test": "ava"
   },
   "devDependencies": {
-    "ava": "^3.11.1"
+    "ava": "^3.11.1",
+    "sinon": "^9.1.0"
   },
   "ava": {
     "require": [

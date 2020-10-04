@@ -1,6 +1,6 @@
 import { createWriteStream, readFileSync } from "fs";
 import { Helper } from "./helper";
-import { chunkedApiCall } from "./api";
+import { Api } from "./api";
 
 export class Core {
     static OK_NEW = { result:  "New data has been saved" };
@@ -32,7 +32,7 @@ export class Core {
         const EPOCH_WEEK = 604800;
 
         const playersList = Object.keys(leftPlayers);
-        const nameList = await chunkedApiCall(playersList, `${this.api}/wot/account/info/`, "account_id",
+        const nameList = await Api.chunkedApiCall(playersList, `${this.api}/wot/account/info/`, "account_id",
             "nickname,last_battle_time", this.config.app.application_id);
         if (nameList.result) {
             return nameList;
@@ -72,7 +72,7 @@ export class Core {
 
         if (check) {
             simplifiedOld = JSON.parse(readFileSync(Core.HISTORICAL, "utf-8"));
-            this.helper.checkChanges(simplifiedOld, this.clanList);
+            Helper.checkChanges(simplifiedOld, this.clanList);
         }
 
         createWriteStream(Core.HISTORICAL).write(JSON.stringify(simplifiedNew), "utf-8");
@@ -102,7 +102,7 @@ export class Core {
      */
     async updateData(check) {
         // API has a cap of 100 clans in a single call, so split up the array and make separate calls
-        const clanData = await chunkedApiCall(this.clanList, `${this.api}/wot/clans/info/`, "clan_id",
+        const clanData = await Api.chunkedApiCall(this.clanList, `${this.api}/wot/clans/info/`, "clan_id",
             "members.account_id,tag", this.config.app.application_id);
         if (clanData.result) {
             return clanData;
@@ -127,11 +127,10 @@ export class Core {
      *      An object which includes the result JSON and an array of invalid clans
      */
     async addNewClans(clansToAdd) {
-        const invalidClans = [];
+        const invalidClans = await Helper.validateClanList(clansToAdd);
 
         for (const id of clansToAdd) {
             const clanId = parseInt(id);
-            // TODO: Validate id
             if (this.clanList.indexOf(clanId) === -1) {
                 this.clanList.push(clanId);
                 continue;
@@ -176,7 +175,7 @@ export class Core {
      *      An array containing the id and tag of all tracked clans
      */
     async showClanList() {
-        const returnedData = await chunkedApiCall(this.clanList, `${this.api}/wot/clans/info/`, "clan_id",
+        const returnedData = await Api.chunkedApiCall(this.clanList, `${this.api}/wot/clans/info/`, "clan_id",
             "tag", this.config.app.application_id);
         if (returnedData.result) {
             return returnedData;

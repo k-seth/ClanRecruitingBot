@@ -1,10 +1,26 @@
 import { existsSync } from "fs";
 import * as path from "path";
+import { Api } from "./api";
 
 export class Helper {
-    static TRACKED_CLANS = path.join(__dirname, "..", "clan_list.json");
+    // static TRACKED_CLANS = path.join(__dirname, "..", "clan_list.json");
     constructor(config) {
         this.config = config;
+    }
+
+    /**
+     * Helper function for determining which list of clans to use. Uses modified list if it exists
+     *
+     * @returns {Promise<any|[]>}
+     *      A promise containing the list of clans that will be initially loaded for tracking
+     */
+    async findClanlist() {
+        if (existsSync(Helper.TRACKED_CLANS)) {
+            return import(Helper.TRACKED_CLANS).then((list) => {
+                return list.clanlist;
+            })
+        }
+        return this.config.clanlist;
     }
 
     /**
@@ -15,28 +31,12 @@ export class Helper {
      * @param clanList
      *      The list of clans tracked by the server
      */
-    checkChanges(simplifiedOld, clanList) {
+    static checkChanges(simplifiedOld, clanList) {
         for (const playerId in simplifiedOld) {
             if (!clanList.includes(parseInt(simplifiedOld[playerId].clan_id))) {
                 delete simplifiedOld[playerId];
             }
         }
-    }
-
-    /**
-     * Helper function for determining which list of clans to use. Uses modified list if it exists
-     *
-     * @returns {Promise<any|[]>}
-     *      A promise containing the list of clans that will be initially loaded for tracking
-     */
-    async findClanlist() {
-        // TODO: Validate this list
-        if (existsSync(Helper.TRACKED_CLANS)) {
-            return import(Helper.TRACKED_CLANS).then((list) => {
-                return list.clanlist;
-            })
-        }
-        return this.config.clanlist;
     }
 
     /**
@@ -82,5 +82,80 @@ export class Helper {
             delete newRoster[clanId]
         }
         return simplifiedNew;
+    }
+
+    /**
+     * A helper function that checks for and removes any clans that do not contain only numbers.
+     * Does not check if the clan is valid, just that it will not break the API
+     *
+     * Split from validateClanList to enable isolated regex testing
+     *
+     * @param clanList
+     *      The array of clans to sanitize
+     * @returns {{valid: *, invalid: []}}
+     *      A list of invalid clans found
+     */
+    static sanitizeClanId(clanList) {
+        let clansToCheck = clanList;
+        const invalidClans = [];
+
+        for (const id of clansToCheck) {
+            if (!/^[0-9]*$/.test(id)) {
+                invalidClans.push(id);
+            }
+        }
+
+        clanList = Helper.removeInvalids(clansToCheck, invalidClans);
+
+        return { valid: clanList, invalid: invalidClans };
+    }
+
+    /**
+     * A helper function that validates clans that are being added against Wargaming's API
+     *
+     * @param clanList
+     *      The array of clans to sanitize
+     * @returns {Promise<{valid: *, invalid: *[]}>}
+     *      A list of invalid clans found
+     */
+    static async validateClanList(clanList) {
+        const sanitizeResult = Helper.sanitizeClanId(clanList);
+
+        const clansToCheck = sanitizeResult.valid;
+        let invalidClans = [];
+
+        if (!clansToCheck.length) {
+            return { valid: clanList, invalid: invalidClans.concat(sanitizeResult.invalid) };
+        }
+
+        // TODO: Add remaining arguments
+        const clanData = await Api.chunkedApiCall(clansToCheck);
+
+        for (const id in clanData) {
+            if (clanData[id] === null) {
+                invalidClans.push(id);
+                clansToCheck.splice(clansToCheck.indexOf(id), 1);
+            }
+        }
+
+        clanList = Helper.removeInvalids(clansToCheck, invalidClans);
+
+        return { valid: clanList, invalid: invalidClans.concat(sanitizeResult.invalid) };
+    }
+
+    /**
+     * Helper function to simply remove any invalid clans from the list of clans
+     *
+     * @param clanList
+     *      The list of clans that needs to be cleaned of invalid entries
+     * @param invalidClans
+     *      The list of invalid entries to be removed
+     */
+    static removeInvalids(clanList, invalidClans) {
+        for (const id of invalidClans) {
+            clanList.splice(clanList.indexOf(id), 1);
+        }
+
+        return clanList;
     }
 }
