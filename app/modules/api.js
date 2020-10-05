@@ -37,7 +37,7 @@ export class Api {
      * @param fields
      *      The fields to include in the response from the API
      * @param appId
-     *      The fields to include in the response from the API
+     *      The application id to enable access to the API
      * @returns {Promise<{}|T|{result: string}>}
      *      An object containing all the data from the API calls
      */

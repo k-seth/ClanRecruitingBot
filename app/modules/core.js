@@ -1,5 +1,5 @@
 import { createWriteStream, readFileSync } from "fs";
-import { Helper } from "./helper";
+import { Helper, TRACKED_CLANS } from "./helper";
 import { Api } from "./api";
 
 export class Core {
@@ -127,7 +127,14 @@ export class Core {
      *      An object which includes the result JSON and an array of invalid clans
      */
     async addNewClans(clansToAdd) {
-        const invalidClans = await Helper.validateClanList(clansToAdd);
+        const sanitizeResult = await Helper.validateClanList(clansToAdd, this.api, this.config.app.application_id);
+
+        clansToAdd = sanitizeResult.valid;
+        const invalidClans = sanitizeResult.invalid;
+
+        if (!clansToAdd.length) {
+            return { result: "No valid clans. Nothing added", invalid: invalidClans };
+        }
 
         for (const id of clansToAdd) {
             const clanId = parseInt(id);
@@ -138,9 +145,8 @@ export class Core {
             invalidClans.push(clanId)
         }
 
-        createWriteStream(Helper.TRACKED_CLANS).write(JSON.stringify({ clanlist: this.clanList }), "utf-8");
+        createWriteStream(TRACKED_CLANS).write(JSON.stringify({ clanlist: this.clanList }), "utf-8");
 
-        // TODO: Find a cleaner way to handle this
         return { result: Core.OK_UPDT.result, invalid: invalidClans };
     }
 
@@ -162,9 +168,8 @@ export class Core {
             index === -1 ? invalidClans.push(clanId) : this.clanList.splice(index, 1);
         }
 
-        createWriteStream(Helper.TRACKED_CLANS).write(JSON.stringify({ clanlist: this.clanList }), "utf-8");
+        createWriteStream(TRACKED_CLANS).write(JSON.stringify({ clanlist: this.clanList }), "utf-8");
 
-        // TODO: Find a cleaner way to handle this
         return { result: Core.OK_UPDT.result, invalid: invalidClans };
     }
 

@@ -2,8 +2,9 @@ import { existsSync } from "fs";
 import * as path from "path";
 import { Api } from "./api";
 
+export const TRACKED_CLANS = path.join(__dirname, "..", "clan_list.json");
+
 export class Helper {
-    // static TRACKED_CLANS = path.join(__dirname, "..", "clan_list.json");
     constructor(config) {
         this.config = config;
     }
@@ -15,8 +16,8 @@ export class Helper {
      *      A promise containing the list of clans that will be initially loaded for tracking
      */
     async findClanlist() {
-        if (existsSync(Helper.TRACKED_CLANS)) {
-            return import(Helper.TRACKED_CLANS).then((list) => {
+        if (existsSync(TRACKED_CLANS)) {
+            return import(TRACKED_CLANS).then((list) => {
                 return list.clanlist;
             })
         }
@@ -115,10 +116,14 @@ export class Helper {
      *
      * @param clanList
      *      The array of clans to sanitize
+     * @param api
+     *      The API endpoint prefix to use
+     * @param appId
+     *      The application id to enable access to the API
      * @returns {Promise<{valid: *, invalid: *[]}>}
      *      A list of invalid clans found
      */
-    static async validateClanList(clanList) {
+    static async validateClanList(clanList, api, appId) {
         const sanitizeResult = Helper.sanitizeClanId(clanList);
 
         const clansToCheck = sanitizeResult.valid;
@@ -128,13 +133,12 @@ export class Helper {
             return { valid: clanList, invalid: invalidClans.concat(sanitizeResult.invalid) };
         }
 
-        // TODO: Add remaining arguments
-        const clanData = await Api.chunkedApiCall(clansToCheck);
+        const clanData = await Api.chunkedApiCall(clansToCheck, `${api}/wot/clans/info/`, "clan_id",
+            "clan_id", appId);
 
         for (const id in clanData) {
             if (clanData[id] === null) {
                 invalidClans.push(id);
-                clansToCheck.splice(clansToCheck.indexOf(id), 1);
             }
         }
 
