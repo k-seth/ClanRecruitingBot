@@ -162,4 +162,27 @@ export class Helper {
 
         return clanList;
     }
+
+    /**
+     * Helper function to get the recent wn8 for the player
+     * TODO: Add testing
+     *
+     * @param url
+     *      The Wotlabs url for the player
+     * @returns {Promise<string>}
+     *      A string representing the wn8 of the player
+     */
+    async static getPlayerRwn8(url) {
+        const searchString = "Recent WN8";
+        // Length of searchString + span tag + newline
+        const increment = 10 + 7 + 1;
+
+        const page = await Api.callWotlabs(url);
+        if (page.result) {
+            return "Unavailable";
+        }
+
+        const index = page.indexOf(searchString);
+        return page.substr(index + increment, 4);
+    }
 }

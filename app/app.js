@@ -67,9 +67,11 @@ BOT.on("message", async function(message) {
         //  logic in the command branch, making it very messy looking
         let reply = "";
         for (const playerId in list) {
-            let playerAndClan = `${list[playerId].nickname} left ${list[playerId].clan}`;
+            const player = list[playerId];
+            
+            let playerAndClan = `${player.nickname} left ${player.clan}`;
             playerAndClan = playerAndClan.replace(/_/g, "\\\_");
-            reply += `${playerAndClan}\n${list[playerId].status}\n`;
+            reply += `${playerAndClan}\n${player.status}\n`;
 
             // Break it up into multiple messages to avoid breaking Discord
             if (reply.length > CHAR_LIMIT) {

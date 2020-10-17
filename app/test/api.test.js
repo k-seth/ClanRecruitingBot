@@ -14,7 +14,7 @@ test.serial('chunkedApiCall single chunk', async t => {
     const data = [];
     for (let i = 0; i < 20; i++) {
         data.push(i);
-        expected[i] = `Value + ${i}`;
+        expected[i] = `Value${i}`;
     }
 
     sinon.stub(Api, 'callApi').returns({ data: expected });
@@ -34,11 +34,11 @@ test.serial('chunkedApiCall multiple chunks', async t => {
 
     for (let i = 0; i < 120; i++) {
         data.push(i);
-        expected[i] = `Value + ${i}`;
+        expected[i] = `Value${i}`;
         if (i < 100) {
-            apiReturnOne[i] = `Value + ${i}`;
+            apiReturnOne[i] = `Value${i}`;
         } else {
-            apiReturnTwo[i] = `Value + ${i}`;
+            apiReturnTwo[i] = `Value${i}`;
         }
     }
 

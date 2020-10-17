@@ -3,7 +3,7 @@ import { Helper, TRACKED_CLANS } from "./helper";
 import { Api } from "./api";
 
 export class Core {
-    static OK_NEW = { result:  "New data has been saved" };
+    static OK_NEW = { result: "New data has been saved" };
     static OK_NONE = { result: "No players have left any tracked clans" };
     static OK_UPDT = { result: "Successfully completed operation. Member data will be updated on next check" };
     static HISTORICAL = "./historical/oldClanRosters";

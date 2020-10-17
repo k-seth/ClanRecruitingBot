@@ -2,7 +2,12 @@
     "app": {
         "application_id": "App ID",
         "inactive_weeks": 2,
-        "server": "na"
+        "server": "na",
+        "recruitment": {
+            "desired_rwn8": 2000,
+            "min_rwn8": 1700,
+            "links_below_min": true
+        }
     },
     "bot": {
         "token": "Bot token",
