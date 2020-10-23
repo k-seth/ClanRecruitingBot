@@ -1,5 +1,5 @@
 # A Discord bot to help clans in World of Tanks with recruiting
-# Copyright (C) 2019 Seth Kuipers
+# Copyright (C) 2019-2020 Seth Kuipers
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,9 @@
 #!/bin/bash
 
 # Setup environment
-[ ! -f ./app/config.json ] && cp config_template.txt ./app/config.json
-cd ./app || exit
+[ ! -f ./config.json ] && mv ./config_template.txt ./config.json
 
-mkdir -p ./historical
+mkdir -p ./app/historical
 npm install
 
 # Run server

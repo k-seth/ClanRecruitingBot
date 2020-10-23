@@ -1,4 +1,4 @@
-import { Api } from "../modules/api.js";
+import { Api } from "../api.js";
 import test from "ava";
 import sinon from "sinon";
 

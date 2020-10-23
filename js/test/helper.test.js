@@ -1,5 +1,5 @@
-import { Helper } from "../modules/helper.js";
-import { Api } from "../modules/api.js";
+import { Helper } from "../helper.js";
+import { Api } from "../api.js";
 import test from "ava";
 import sinon from "sinon";
 

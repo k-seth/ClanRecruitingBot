@@ -14,7 +14,7 @@
         "remove": "remove",
         "help": "help"
     },
-    "clanlist": [
+    "clanList": [
         1000016749,
         1000008386,
         1000002392,

@@ -19,7 +19,7 @@ import config from "./config.json";
 import Discord from "discord.js";
 
 // Helper module imports
-import { Core } from "./modules/core";
+import { Core } from "./core";
 
 // Config constants
 const BOT_CONFIG = config.bot;
