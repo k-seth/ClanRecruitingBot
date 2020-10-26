@@ -42,7 +42,7 @@ export class Api {
      *      An object containing all the data from the API calls
      */
     public static async chunkedApiCall(data: any[], url: string, requestId: string,
-                                       fields: string, appId: number): Promise<{}|T|{result: string}> {
+                                       fields: string, appId: string): Promise<{}|T|{result: string}> {
         const apiData = {};
         const MAX_API_SIZE = 100;
 

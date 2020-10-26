@@ -17,7 +17,7 @@ export class ClanManager {
      *      The service that handles the list of tracked clans
      */
     constructor(private readonly _api: string,
-                private readonly _appId: number,
+                private readonly _appId: string,
                 private readonly _clanListService: ClanListService
     ) {
     }
@@ -31,7 +31,7 @@ export class ClanManager {
      *      The list of invalid entries to be removed
      * @private
      */
-    private static removeInvalids(clanList: any[], invalidClans: any[]): any[] {
+    private static removeInvalids(clanList: string[], invalidClans: string[]): string[] {
         for (const id of invalidClans) {
             clanList.splice(clanList.indexOf(id), 1);
         }
@@ -51,7 +51,7 @@ export class ClanManager {
      *      A list of invalid clans found
      * @private
      */
-    private static sanitizeClanId(clanList: any[]): {valid: any, invalid: any[]} {
+    private static sanitizeClanId(clanList: string[]): {valid: string[], invalid: string[]} {
         const clansToCheck = clanList;
         const invalidClans = [];
 
@@ -79,7 +79,7 @@ export class ClanManager {
      *      A list of invalid clans found
      * @private
      */
-    private static async validateClanList(clanList: any[], api: string, appId: number) {
+    private static async validateClanList(clanList: string[], api: string, appId: string) {
         const sanitizeResult = ClanManager.sanitizeClanId(clanList);
 
         const clansToCheck = sanitizeResult.valid;
@@ -111,7 +111,7 @@ export class ClanManager {
      * @returns
      *      An object which includes the result JSON and an array of invalid clans
      */
-    public async addNewClans(clansToAdd: any[]): Promise<{result: string, invalid: any[]}> {
+    public async addNewClans(clansToAdd: string[]): Promise<{result: string, invalid: string[]}> {
         const sanitizeResult = await ClanManager.validateClanList(clansToAdd, this._api, this._appId);
 
         clansToAdd = sanitizeResult.valid;
@@ -144,11 +144,11 @@ export class ClanManager {
      * @returns
      *      An array which includes the result JSON and an array of invalid clans
      */
-    public async removeExistingClans(clansToRemove: any[]): Promise<{result: string, invalid: any[]}> {
-        const invalidClans = [];
+    public async removeExistingClans(clansToRemove: string[]): Promise<{result: string, invalid: string[]}> {
+        const invalidClans: string[] = [];
 
         for (const id of clansToRemove) {
-            const clanId = parseInt(id);
+            const clanId = parseInt(id, 10);
             // TODO: Switch to findIndex
             const index = this._clanListService.clanList.indexOf(clanId);
 

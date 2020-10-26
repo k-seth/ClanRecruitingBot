@@ -35,25 +35,19 @@ export abstract class Util {
      *      An array with Discord safe messages
      */
     public static discordify(messageArray: string[]): string[] {
+        // Discord has a 2000 character limit. 1850 is to be safe
+        const MAX_SIZE = 1850;
+        const discordMessages: string[] = [];
 
-        return;
+        let message = '';
+        for (const text of messageArray) {
+            if (message.length > MAX_SIZE) {
+                discordMessages.push(message);
+                message = '';
+            }
+            message += `${text.replace(/_/g, '\\\_')}\n`;
+        }
+
+        return discordMessages;
     }
-
-    // const CHAR_LIMIT = 1850; // Discord has a 2000 character limit. 1850 is to be safe
-    // // TODO: Split this into another function. It is the only section to have significant
-    // //  logic in the command branch, making it very messy looking
-    // let reply = '';
-    // for (const playerId in list) {
-    //     let playerAndClan = `${list[playerId].nickname} left ${list[playerId].clan}`;
-    //     playerAndClan = playerAndClan.replace(/_/g, '\\\_');
-    //     reply += `${playerAndClan}\n${list[playerId].status}\n`;
-    //
-    //     // Break it up into multiple messages to avoid breaking Discord
-    //     if (reply.length > CHAR_LIMIT) {
-    //         message.channel.send(reply);
-    //         reply = '';
-    //     }
-    // }
-    //
-    // message.channel.send(reply);
 }

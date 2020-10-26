@@ -54,4 +54,14 @@ export class Player {
         // RWN8: <wn8> -> <status>
         return `${this._name} left ${this._clan.getTag()}\nRWN8: ${this._wn8} -> ${this._status}\n`;
     }
+
+    /**
+     * Gets the clan id of the clan the player is in
+     *
+     * @returns
+     *      The players clan id
+     */
+    public getClanId(): number {
+        return this._clan.id;
+    }
 }

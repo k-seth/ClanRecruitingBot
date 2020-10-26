@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // The modules imported by the server
-import Discord from 'discord.js';
+import Discord, {Message} from 'discord.js';
 // @ts-ignore
 import config from './config.json';
 import { ClanManager } from './manager/clanManager';
@@ -25,30 +25,31 @@ import { Util } from './util/util';
 
 // Config constants
 const BOT_CONFIG = config.bot;
-const PREFIX = BOT_CONFIG.prefix;
+const PREFIX: string = BOT_CONFIG.prefix;
 
 // Success constants
 const OK_EMPTY = 'No clans supplied. No action taken';
 
 // Other constants
-const BOT = new Discord.Client();
+const BOT: Discord.Client = new Discord.Client();
 
 const api = `https://api.worldoftanks${Util.determineRegionValues(config.app.server)}`;
+const appId: string = config.app.application_id;
 
-const clanListService = new ClanListService(config.clanList);
-const clanManager = new ClanManager(api, config.app.application_id, clanListService);
-const dataManager = new DataManager(config, clanListService);
+const clanListService: ClanListService = new ClanListService(config.clanList, api, appId);
+const clanManager: ClanManager = new ClanManager(api, appId, clanListService);
+const dataManager: DataManager = new DataManager(api, config.app, clanListService);
 
 // DISCORD FUNCTIONS
 
 BOT.login(BOT_CONFIG.token);
-BOT.on('message', async (message) => {
+BOT.on('message', async (message: Message) => {
     if (!message.content.startsWith(PREFIX) || message.author.bot) {
         return;
     }
 
-    const args = message.content.slice(PREFIX.length).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
+    const args: string[] = message.content.slice(PREFIX.length).trim().split(/ +/);
+    const command: string = args.shift().toLowerCase();
 
     let responseArray: string[];
     if (command === BOT_CONFIG.list) {
@@ -68,6 +69,8 @@ BOT.on('message', async (message) => {
     }
 
     // Send the accumulated responses from the program
-    // In general, this should only have one or two values, but there may be times where more are necessary
-    responseArray.forEach(value => message.channel.send(value));
+    // In general, this will only have one or two values, but there may be times where more are necessary
+    for (const response of responseArray) {
+        await message.channel.send(response);
+    }
 });

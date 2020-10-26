@@ -1,32 +1,43 @@
 import { createWriteStream, readFileSync } from 'fs';
+import { Clan } from '../object/clan';
 import { ClanListService } from '../service/clanListService';
 import { Api } from '../util/api';
+import { Util } from '../util/util';
+import {Player} from "../object/player";
 
 /**
  * Service class for updating
  */
 export class DataManager {
     private readonly HISTORICAL = './historical/oldClanRosters';
-    private readonly config: {};
 
-    constructor(config: {},
+    /**
+     * @param _api
+     *      The api endpoint to use
+     * @param _config
+     *      The app section of the program configuration file
+     * @param _clanListService
+     *      The service that handles the list of tracked clans
+     */
+    constructor(private readonly _api: string,
+                private readonly _config,
                 private readonly _clanListService: ClanListService
     ) {
-        this.config = config;
     }
 
     /**
      * Helper function for removing players in clans no longer being tracked by the application
      *
-     * @param simplifiedOld
+     * @param oldRoster
      *      The roster read back from the saved file
      * @param clanList
      *      The list of clans tracked by the server
      */
-    private static checkChanges(simplifiedOld: {}, clanList: any[]): void {
-        for (const playerId in simplifiedOld) {
-            if (!clanList.includes(parseInt(simplifiedOld[playerId].clan_id))) {
-                delete simplifiedOld[playerId];
+    private static checkChanges(oldRoster: Player[], clanList: Clan[]): void {
+        for (const player of oldRoster) {
+            const index = oldRoster.indexOf(player);
+            if (clanList.findIndex(clan => clan.id === player.getClanId()) === -1) {
+                oldRoster.splice(index, 1);
             }
         }
     }
@@ -63,13 +74,13 @@ export class DataManager {
      *      A JSON representing the names and clans of all players that left, or a generic message if none
      */
     public async constructNameList(leftPlayers: {}): Promise<{}|T|{result: string}> {
-        const WOTLABS = `https://wotlabs.net/${this.config.app.server}/player/`;
-        const ACTIVE_PERIOD = this.config.app.inactive_weeks;
-        const EPOCH_WEEK = 604800;
+        const _wotLabs = `https://wotlabs.net/${this._config.server}/player/`;
+        const _activePeriod = this._config.inactive_weeks;
+        const _epochWeek = 604800;
 
         const playersList = Object.keys(leftPlayers);
-        const nameList = await Api.chunkedApiCall(playersList, `${this.api}/wot/account/info/`, 'account_id',
-            'nickname,last_battle_time', this.config.app.application_id);
+        const nameList = await Api.chunkedApiCall(playersList, `${this._api}/wot/account/info/`, 'account_id',
+            'nickname,last_battle_time', this._config.application_id);
         if (nameList.result) {
             return nameList;
         }
@@ -82,11 +93,11 @@ export class DataManager {
             }
 
             nameList[playerId].clan = leftPlayers[playerId].clan_tag;
-            if (ACTIVE_PERIOD >= 1 && (new Date()).getTime()/1000 - nameList[playerId].last_battle_time >= EPOCH_WEEK * ACTIVE_PERIOD) {
+            if (_activePeriod >= 1 && (new Date()).getTime()/1000 - nameList[playerId].last_battle_time >= _epochWeek * _activePeriod) {
                 nameList[playerId].status = 'Inactive';
                 continue;
             }
-            nameList[playerId].status = `<${WOTLABS}${nameList[playerId].nickname}>`;
+            nameList[playerId].status = `<${_wotLabs}${nameList[playerId].nickname}>`;
         }
 
         return nameList;
@@ -104,11 +115,11 @@ export class DataManager {
      *      A JSON containing all players that have left, or a generic message
      */
     public updateRosters(simplifiedNew: {}, check: boolean): {result: string}|{} {
-        let simplifiedOld = {};
+        let oldRoster: Player[];
 
         if (check) {
-            simplifiedOld = JSON.parse(readFileSync(this.HISTORICAL, 'utf-8'));
-            DataManager.checkChanges(simplifiedOld, this.clanList);
+            oldRoster = JSON.parse(readFileSync(this.HISTORICAL, 'utf-8'));
+            DataManager.checkChanges(oldRoster, this._clanListService.clanList);
         }
 
         createWriteStream(this.HISTORICAL).write(JSON.stringify(simplifiedNew), 'utf-8');
@@ -135,22 +146,28 @@ export class DataManager {
      *      A boolean representing whether or not a full roster check should be completed
      * @returns
      *      An object containing the names of all players who have left their clan
+     *      Promise<{}|T|{result: string}>
      */
-    public async updateData(check: boolean): Promise<{}|T|{result: string}> {
+    public async updateData(check: boolean): Promise<string[]> {
+        const results: string[] = [];
         // API has a cap of 100 clans in a single call, so split up the array and make separate calls
-        const clanData = await Api.chunkedApiCall(this.clanList, `${this.api}/wot/clans/info/`, 'clan_id',
-            'members.account_id,tag', this.config.app.application_id);
+        const clanData = await Api.chunkedApiCall(this._clanListService.getApiList(), `${this._api}/wot/clans/info/`, 'clan_id',
+            'members.account_id,tag', this._config.application_id);
         if (clanData.result) {
-            return clanData;
+            return Util.discordify([clanData.result]);
+            // results.push(clanData.result);
         }
 
         const simplifiedOld = this.updateRosters(DataManager.simplifyRoster(clanData), check);
         if (!Object.keys(simplifiedOld).length) {
-            return { result: 'No players have left any tracked clans' };
+            return Util.discordify(['No players have left any tracked clans']);
+            // results.push('No players have left any tracked clans');
         } else if (simplifiedOld.result) {
-            return simplifiedOld;
+            return Util.discordify([simplifiedOld.result]);
+            // results.push(simplifiedOld.result);
         }
 
         return await this.constructNameList(simplifiedOld);
+        return Util.discordify(results);
     }
 }
