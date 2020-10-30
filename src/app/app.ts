@@ -15,57 +15,56 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // The modules imported by the server
-import Discord, {Message} from 'discord.js';
+import Discord, { Message } from 'discord.js';
 // @ts-ignore
 import config from './config.json';
 import { ClanManager } from './manager/clanManager';
-import { DataManager } from './manager/dataManager';
+import { PlayerManager } from './manager/playerManager';
 import { ClanListService } from './service/clanListService';
+import { PlayerListService } from './service/playerListService';
 import { Util } from './util/util';
 
 // Config constants
-const BOT_CONFIG = config.bot;
-const PREFIX: string = BOT_CONFIG.prefix;
-
-// Success constants
-const OK_EMPTY = 'No clans supplied. No action taken';
+const botConfig = config.bot;
+const commands = config.bot;
+const prefix: string = botConfig.prefix;
 
 // Other constants
-const BOT: Discord.Client = new Discord.Client();
+const bot: Discord.Client = new Discord.Client();
 
 const api = `https://api.worldoftanks${Util.determineRegionValues(config.app.server)}`;
 const appId: string = config.app.application_id;
 
 const clanListService: ClanListService = new ClanListService(config.clanList, api, appId);
+const playerListService: PlayerListService = new PlayerListService();
 const clanManager: ClanManager = new ClanManager(api, appId, clanListService);
-const dataManager: DataManager = new DataManager(api, config.app, clanListService);
+const playerManager: PlayerManager = new PlayerManager(api, config.app, clanListService, playerListService);
 
 // DISCORD FUNCTIONS
 
-BOT.login(BOT_CONFIG.token);
-BOT.on('message', async (message: Message) => {
-    if (!message.content.startsWith(PREFIX) || message.author.bot) {
+bot.login(botConfig.token);
+bot.on('message', async (message: Message) => {
+    if (!message.content.startsWith(prefix) || message.author.bot) {
         return;
     }
 
-    const args: string[] = message.content.slice(PREFIX.length).trim().split(/ +/);
+    const args: string[] = message.content.slice(prefix.length).trim().split(/ +/);
     const command: string = args.shift().toLowerCase();
 
-    let responseArray: string[];
-    if (command === BOT_CONFIG.list) {
-        responseArray = await clanManager.showClanList();
-    } else if (command === BOT_CONFIG.help) {
-        message.channel.send('Command coming soon!');
-    } else if (command === BOT_CONFIG.add || command === BOT_CONFIG.remove) {
-        if (!args.length) {
-            return message.channel.send(OK_EMPTY);
-        }
-
-        responseArray = command === BOT_CONFIG.add ? await clanManager.addNewClans(args) : await clanManager.removeExistingClans(args);
-    } else if (command === BOT_CONFIG.seed || command === BOT_CONFIG.check) {
-        responseArray = await dataManager.updateData(command === BOT_CONFIG.check);
-    }  else {
+    // Ignore invalid commands
+    if (commands.indexOf(command) === -1) {
         return;
+    }
+
+    let responseArray: string[];
+    if (command === commands.list) {
+        responseArray = await clanManager.showClanList();
+    } else if (command === commands.help) {
+        message.channel.send('Command coming soon!');
+    } else if (command === commands.add || command === commands.remove) {
+        responseArray = command === commands.add ? await clanManager.addNewClans(args) : await clanManager.removeExistingClans(args);
+    } else if (command === commands.seed || command === commands.check) {
+        responseArray = await playerManager.updateData(command === commands.check);
     }
 
     // Send the accumulated responses from the program

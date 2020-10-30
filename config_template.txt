@@ -2,17 +2,24 @@
     "app": {
         "application_id": "App ID",
         "inactive_weeks": 2,
-        "server": "na"
+        "server": "na",
+        "recruitment": {
+          "desired_rwn8": 2000,
+          "min_rwn8": 1700,
+          "links_below_min": true
+        }
     },
     "bot": {
         "token": "Bot token",
         "prefix": "!",
-        "seed": "new",
-        "check": "left",
-        "list": "show",
-        "add": "add",
-        "remove": "remove",
-        "help": "help"
+        "commands": {
+            "seed": "new",
+            "check": "left",
+            "list": "show",
+            "add": "add",
+            "remove": "remove",
+            "help": "help"
+        }
     },
     "clanList": [
         1000016749,

@@ -3,14 +3,13 @@
  */
 export class Clan {
     /**
-     *
-     * @param _tag
-     *      The clan's tag
      * @param id
      *      The clan's unique id
+     * @param _tag
+     *      The clan's tag
      */
-    constructor(private _tag: string,
-                public readonly id: number
+    constructor(public readonly id: number,
+                private _tag: string
     ) {
     }
 

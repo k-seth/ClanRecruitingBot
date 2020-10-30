@@ -1,16 +1,14 @@
-import { createWriteStream, readFileSync } from 'fs';
 import { Clan } from '../object/clan';
+import { Player } from '../object/player';
 import { ClanListService } from '../service/clanListService';
+import { PlayerListService } from '../service/playerListService';
 import { Api } from '../util/api';
 import { Util } from '../util/util';
-import {Player} from "../object/player";
 
 /**
- * Service class for updating
+ * Manages the Discord requests related to player information
  */
-export class DataManager {
-    private readonly HISTORICAL = './historical/oldClanRosters';
-
+export class PlayerManager {
     /**
      * @param _api
      *      The api endpoint to use
@@ -18,10 +16,13 @@ export class DataManager {
      *      The app section of the program configuration file
      * @param _clanListService
      *      The service that handles the list of tracked clans
+     * @param _playerListService
+     *      The service that handles the list of players
      */
     constructor(private readonly _api: string,
                 private readonly _config,
-                private readonly _clanListService: ClanListService
+                private readonly _clanListService: ClanListService,
+                private readonly _playerListService: PlayerListService
     ) {
     }
 
@@ -29,14 +30,12 @@ export class DataManager {
      * Helper function for removing players in clans no longer being tracked by the application
      *
      * @param oldRoster
-     *      The roster read back from the saved file
-     * @param clanList
-     *      The list of clans tracked by the server
+     *      The old player data
      */
-    private static checkChanges(oldRoster: Player[], clanList: Clan[]): void {
+    private checkChanges(oldRoster: Player[]): void {
         for (const player of oldRoster) {
             const index = oldRoster.indexOf(player);
-            if (clanList.findIndex(clan => clan.id === player.getClanId()) === -1) {
+            if (this._clanListService.clanList.findIndex(clan => clan.id === player.getClanId()) === -1) {
                 oldRoster.splice(index, 1);
             }
         }
@@ -73,7 +72,7 @@ export class DataManager {
      * @returns
      *      A JSON representing the names and clans of all players that left, or a generic message if none
      */
-    public async constructNameList(leftPlayers: {}): Promise<{}|T|{result: string}> {
+    public async constructNameList(leftPlayers: {}): Promise<{}|any|{result: string}> {
         const _wotLabs = `https://wotlabs.net/${this._config.server}/player/`;
         const _activePeriod = this._config.inactive_weeks;
         const _epochWeek = 604800;
@@ -104,70 +103,67 @@ export class DataManager {
     }
 
     /**
-     * A function which reads historical data and writes the new rosters to file. Returns the list of players that left
-     * their respective clans
+     * Compares the old roster data to the new roster to find all all players that are no longer in a clan
      *
-     * @param simplifiedNew
-     *      The data from an API call in the form of an object holding the new player data
-     * @param check
-     *      A boolean representing whether a full check should be completed
+     * @param oldRoster
+     *      The old player roster
+     * @param newRoster
+     *      The new player roster
      * @returns
-     *      A JSON containing all players that have left, or a generic message
+     *      An array containing the all players that have left
      */
-    public updateRosters(simplifiedNew: {}, check: boolean): {result: string}|{} {
-        let oldRoster: Player[];
+    private findLeftPlayers(oldRoster: Player[], newRoster: Player[]): Player[] {
+        const leftPlayers: Player[] = [];
 
-        if (check) {
-            oldRoster = JSON.parse(readFileSync(this.HISTORICAL, 'utf-8'));
-            DataManager.checkChanges(oldRoster, this._clanListService.clanList);
-        }
-
-        createWriteStream(this.HISTORICAL).write(JSON.stringify(simplifiedNew), 'utf-8');
-
-        if (!check) {
-            return { result:  'New data has been saved' };
-        }
-
-        // Compare simplifiedOld to simplifiedNew, and remove any overlap that exists
-        // Same clan does not matter, as someone who has left and joined a new clan can not be recruited anyway
-        for (const playerId in simplifiedOld) {
-            if (playerId in simplifiedNew) {
-                delete simplifiedOld[playerId];
+        // Compare the old roster to the new roster, and remove any players in both
+        // Clan does not matter, as someone who has left and joined a new clan can not be recruited anyway
+        for (const oldPlayer of oldRoster) {
+            if (newRoster.findIndex(newPlayer => newPlayer.id === oldPlayer.id) === -1) {
+                leftPlayers.push(oldPlayer);
             }
         }
 
-        return simplifiedOld;
+        return leftPlayers;
+    }
+
+    private buildNewRoster(apiData: any): Player[] {
+
+        return;
     }
 
     /**
-     * A handler function which makes calls to functions to update rosters and construct the list of players that have left
+     * A handler function which makes calls to functions to update rosters and construct the list of players that have left.
+     * Output is expected to be Discord safe.
      *
      * @param check
      *      A boolean representing whether or not a full roster check should be completed
      * @returns
-     *      An object containing the names of all players who have left their clan
-     *      Promise<{}|T|{result: string}>
+     *      An array containing one or more strings representing the result of the request
      */
     public async updateData(check: boolean): Promise<string[]> {
-        const results: string[] = [];
-        // API has a cap of 100 clans in a single call, so split up the array and make separate calls
+        const oldRoster = this._playerListService.retrieveRoster();
+        this.checkChanges(oldRoster);
+
         const clanData = await Api.chunkedApiCall(this._clanListService.getApiList(), `${this._api}/wot/clans/info/`, 'clan_id',
             'members.account_id,tag', this._config.application_id);
         if (clanData.result) {
             return Util.discordify([clanData.result]);
-            // results.push(clanData.result);
         }
 
-        const simplifiedOld = this.updateRosters(DataManager.simplifyRoster(clanData), check);
-        if (!Object.keys(simplifiedOld).length) {
-            return Util.discordify(['No players have left any tracked clans']);
-            // results.push('No players have left any tracked clans');
-        } else if (simplifiedOld.result) {
-            return Util.discordify([simplifiedOld.result]);
-            // results.push(simplifiedOld.result);
+        const newRoster = this.buildNewRoster(clanData);
+        this._playerListService.saveRoster(newRoster);
+
+        // If all we are doing is seeding new data, just write the roster and return
+        if (!check) {
+            return Util.discordify(['New data has been saved.']);
         }
 
-        return await this.constructNameList(simplifiedOld);
-        return Util.discordify(results);
+        const leftPlayers = this.findLeftPlayers(oldRoster, newRoster);
+        if (!leftPlayers.length) {
+            return Util.discordify(['No players have left any tracked clans.']);
+        }
+        // TODO: Get data for players that left and return that
+
+        return Util.discordify(['']);
     }
 }

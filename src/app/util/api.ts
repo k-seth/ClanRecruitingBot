@@ -11,7 +11,7 @@ export class Api {
      * @returns
      *      A JSON which is expected to be returned by the Wargaming API
      */
-    public static async callApi(url: string, body: URLSearchParams): Promise<T|{result: string}> {
+    public static async callApi(url: string, body: URLSearchParams): Promise<any|{result: string}> {
         const ERR_API = { result: 'An unexpected error occurred contacting the Wargaming API' };
         const ERR_RTN = { result: 'An unexpected error occurred with the data returned by Wargaming' };
 
@@ -42,7 +42,7 @@ export class Api {
      *      An object containing all the data from the API calls
      */
     public static async chunkedApiCall(data: any[], url: string, requestId: string,
-                                       fields: string, appId: string): Promise<{}|T|{result: string}> {
+                                       fields: string, appId: string): Promise<{}|any|{result: string}> {
         const apiData = {};
         const MAX_API_SIZE = 100;
 

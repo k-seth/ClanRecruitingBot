@@ -8,7 +8,7 @@ import { Api } from '../util/api';
  */
 export class ClanListService {
     public clanList: Clan[];
-    private readonly _trackedClansPath: string = path.join(__dirname, '..', 'clan_list.json');
+    private readonly _clanListPath: string = path.join(__dirname, '..', 'clan_list.json');
 
     /**
      * @param _clanList
@@ -27,13 +27,14 @@ export class ClanListService {
 
     /**
      * Assigns the list of tracked clans from its file, creating it if it does not exist
+     * Throws an error if an API failure occurs while creating the initial list
      *
      * @returns
      *      An empty promise
      * @private
      */
     private async loadClanList(): Promise<void> {
-        if (!existsSync(this._trackedClansPath)) {
+        if (!existsSync(this._clanListPath)) {
             const writeList: Clan[] = [];
             const clanData = await Api.chunkedApiCall(this._clanList, `${this._api}/wot/clans/info/`, 'clan_id',
                 'tag', this._appId);
@@ -44,15 +45,15 @@ export class ClanListService {
 
             for (const clanId in clanData) {
                 const clanInfo = clanData[clanId];
-                writeList.push(new Clan(clanId, clanInfo.tag));
+                writeList.push(new Clan(parseInt(clanId, 10), clanInfo.tag));
             }
 
             // This write must be done synchronously, as we load it immediately after
-            writeFileSync(this._trackedClansPath, JSON.stringify({ clanList: writeList }));
+            writeFileSync(this._clanListPath, JSON.stringify(writeList));
         }
 
-        this.clanList = await import(this._trackedClansPath).then((list: { clanList: Clan[] }) => {
-            return list.clanList;
+        this.clanList = await import(this._clanListPath).then((list: Clan[]) => {
+            return list;
         });
     }
 
@@ -60,7 +61,7 @@ export class ClanListService {
      * Writes the list of tracked clans to file
      */
     public updateSavedList(): void {
-        createWriteStream(this._trackedClansPath).write(JSON.stringify({ clanList: this.clanList }), 'utf-8');
+        createWriteStream(this._clanListPath).write(JSON.stringify(this.clanList), 'utf-8');
     }
 
     /**

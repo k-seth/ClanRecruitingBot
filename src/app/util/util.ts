@@ -1,3 +1,5 @@
+import { RegionError } from '../error/RegionError';
+
 /**
  * Utility class for miscellaneous helper methods
  */
@@ -21,13 +23,14 @@ export abstract class Util {
             case 'sea':
                 return '.asia';
             default:
-                throw new Error('Invalid region selected');
+                throw new RegionError('Invalid region selected');
         }
     }
 
     /**
      * Converts the incoming array into a Discord safe message format.
-     * Escapes underscores (_) and limits messages to the message maximum character limit
+     * Escapes underscores (_) and limits messages to the message maximum character limit.
+     * Any message being sent to Discord should come through this to prevent unexpected behaviour in future changes.
      *
      * @param messageArray
      *      The array of raw output messages produced
@@ -48,6 +51,13 @@ export abstract class Util {
             message += `${text.replace(/_/g, '\\\_')}\n`;
         }
 
+        discordMessages.push(message);
         return discordMessages;
     }
+}
+
+export enum PlayerStatus {
+    Active = 'Active',
+    BelowReqs = 'Below Requirements',
+    Inactive = 'Inactive'
 }
