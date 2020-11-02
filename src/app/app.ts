@@ -58,11 +58,17 @@ bot.on('message', async (message: Message) => {
 
     let responseArray: string[];
     if (command === commands.list) {
-        responseArray = await clanManager.showClanList();
+        responseArray = clanManager.showClanList();
     } else if (command === commands.help) {
         message.channel.send('Command coming soon!');
-    } else if (command === commands.add || command === commands.remove) {
-        responseArray = command === commands.add ? await clanManager.addNewClans(args) : await clanManager.removeExistingClans(args);
+    } else if (command === commands.add) {
+        // Pre-emptively remove duplicates
+        const set = new Set<string>(args);
+        responseArray = await clanManager.addClans(Array.from(set));
+    } else if (command === commands.remove) {
+        // Pre-emptively remove duplicates
+        const set = new Set<string>(args);
+        responseArray = await clanManager.removeClans(Array.from(set));
     } else if (command === commands.seed || command === commands.check) {
         responseArray = await playerManager.updateData(command === commands.check);
     }

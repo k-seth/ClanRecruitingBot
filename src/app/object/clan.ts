@@ -41,6 +41,6 @@ export class Clan {
      */
     public getClanInfo(): string {
         // <id> - <tag>
-        return `${this.id} - ${this._tag.replace(/_/g, '\\\_')}`;
+        return `${this.id} - ${this._tag}`;
     }
 }

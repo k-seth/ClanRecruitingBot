@@ -1,4 +1,3 @@
-import { Clan } from '../object/clan';
 import { Player } from '../object/player';
 import { ClanListService } from '../service/clanListService';
 import { PlayerListService } from '../service/playerListService';
@@ -35,7 +34,7 @@ export class PlayerManager {
     private checkChanges(oldRoster: Player[]): void {
         for (const player of oldRoster) {
             const index = oldRoster.indexOf(player);
-            if (this._clanListService.clanList.findIndex(clan => clan.id === player.getClanId()) === -1) {
+            if (this._clanListService.getClanList().findIndex(clan => clan.id === player.getClanId()) === -1) {
                 oldRoster.splice(index, 1);
             }
         }

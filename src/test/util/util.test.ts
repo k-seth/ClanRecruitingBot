@@ -14,6 +14,7 @@ test('determineRegionValues sea server', determineRegionValues, 'sea', '.asia');
 
 test('determineRegionValues invalid server', t => {
     const error = t.throws(() => Util.determineRegionValues('sa'), {instanceOf: RegionError});
+    t.is(error.name, 'RegionError');
     t.is(error.message, 'Invalid region selected');
 });
 

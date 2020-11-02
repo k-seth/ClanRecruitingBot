@@ -30,4 +30,4 @@ const getClanInfo = (t: ExecutionContext, id: number, tag: string, expected: str
 
 test('getClanInfo "12345, TesT"', getClanInfo, 12345, 'TesT', '12345 - TesT');
 test('getClanInfo "98765, tag"', getClanInfo, 98765, 'tag', '98765 - tag');
-test('getClanInfo "11111, _tag_"', getClanInfo, 11111, '_tag_', '11111 - \\_tag\\_');
+test('getClanInfo "11111, _tag_"', getClanInfo, 11111, '_tag_', '11111 - _tag_');

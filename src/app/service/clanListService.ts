@@ -1,5 +1,6 @@
 import { createWriteStream, existsSync, writeFileSync } from 'fs';
 import path from 'path';
+import { ApiError } from '../error/ApiError';
 import { Clan } from '../object/clan';
 import { Api } from '../util/api';
 
@@ -7,22 +8,22 @@ import { Api } from '../util/api';
  * A service class responsible for providing the list of tracked clans, as well as all reading or writing operations
  */
 export class ClanListService {
-    public clanList: Clan[];
+    private clanList: Clan[];
     private readonly _clanListPath: string = path.join(__dirname, '..', 'clan_list.json');
 
     /**
-     * @param _clanList
+     * @param _configList
      *      The list of clans in the config file
      * @param _api
      *      The api endpoint to use
      * @param _appId
      *      The application ID used with the Wargaming API
      */
-    constructor(private readonly _clanList: string[],
+    constructor(private readonly _configList: string[],
                 private readonly _api: string,
                 private readonly _appId: string
     ) {
-        this.loadClanList();
+        this.readClanList();
     }
 
     /**
@@ -33,19 +34,25 @@ export class ClanListService {
      *      An empty promise
      * @private
      */
-    private async loadClanList(): Promise<void> {
+    private async readClanList(): Promise<void> {
         if (!existsSync(this._clanListPath)) {
-            const writeList: Clan[] = [];
-            const clanData = await Api.chunkedApiCall(this._clanList, `${this._api}/wot/clans/info/`, 'clan_id',
-                'tag', this._appId);
-            if (clanData.result) {
-                // This is a critical error, program functionality can not continue
-                throw new Error('A critical error occurred loading the clan list');
-            }
+            let writeList: Clan[] = [];
+            // Make sure the list is API safe
+            const sanitizedConfigList: number[] = this._configList.filter(clanId => /^[0-9]*$/.test(clanId))
+                .map(clanId => parseInt(clanId, 10));
 
-            for (const clanId in clanData) {
-                const clanInfo = clanData[clanId];
-                writeList.push(new Clan(parseInt(clanId, 10), clanInfo.tag));
+            if (!!sanitizedConfigList.length) {
+                const clanData = await Api.chunkedApiCall(sanitizedConfigList, `${this._api}/wot/clans/info/`, 'clan_id',
+                    'tag', this._appId);
+                if (clanData.result) {
+                    // This is a critical error, program functionality can not continue
+                    throw new ApiError('A critical error occurred loading the clan list');
+                }
+
+                // Filter out any invalid clans, and create the new clan list
+                writeList = Object.keys(clanData).filter(clanId => clanData[clanId] !== null)
+                    .map(clanId => parseInt(clanId, 10))
+                    .map(clanId => new Clan(clanId, clanData[clanId].tag));
             }
 
             // This write must be done synchronously, as we load it immediately after
@@ -58,9 +65,53 @@ export class ClanListService {
     }
 
     /**
-     * Writes the list of tracked clans to file
+     * Gets the list of tracked clans
+     *
+     * @returns
+     *      The list of tracked clans
      */
-    public updateSavedList(): void {
+    public getClanList(): Clan[] {
+        return this.clanList;
+    }
+
+    /**
+     * Adds clans to the list of tracked clans based on the clans in the delta
+     *
+     * @param delta
+     *      The list of clans ids to add to the tracked clans list
+     * @returns
+     *      An array with all the affected clans
+     */
+    public addTrackedClans(delta: Clan[]): string[] {
+        for (const clan of delta) {
+            this.clanList.push(clan);
+        }
+        this.updateSavedList();
+        return delta.map(clan => clan.id.toString());
+    }
+
+    /**
+     * Removes clans from the list of tracked clans based on the clans in the delta
+     *
+     * @param delta
+     *      The clans to remove from the tracked clans list
+     * @returns
+     *      An array with all the affected clans
+     */
+    public removeTrackedClans(delta: number[]): string[] {
+        for (const clanId of delta) {
+            const index = this.clanList.findIndex(clan => clan.id === clanId);
+            this.clanList.splice(index, 1);
+        }
+        this.updateSavedList();
+        return delta.map(clanId => clanId.toString());
+    }
+
+    /**
+     * Writes the list of tracked clans to file
+     * @private
+     */
+    private updateSavedList(): void {
         createWriteStream(this._clanListPath).write(JSON.stringify(this.clanList), 'utf-8');
     }
 
@@ -71,12 +122,6 @@ export class ClanListService {
      *      An array with the id of each tracked clan
      */
     public getApiList(): number[] {
-        const idList: number[] = [];
-
-        for (const clan of this.clanList) {
-            idList.push(clan.id);
-        }
-
-        return idList;
+        return this.clanList.map(clan => clan.id);
     }
 }

@@ -1,4 +1,5 @@
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
+import axios from 'axios';
 
 export class Api {
     /**
@@ -12,17 +13,25 @@ export class Api {
      *      A JSON which is expected to be returned by the Wargaming API
      */
     public static async callApi(url: string, body: URLSearchParams): Promise<any|{result: string}> {
-        const ERR_API = { result: 'An unexpected error occurred contacting the Wargaming API' };
-        const ERR_RTN = { result: 'An unexpected error occurred with the data returned by Wargaming' };
+        const apiError = { result: 'An unexpected error occurred contacting the Wargaming API.' };
+        const dataError = { result: 'An unexpected error occurred with the data returned by Wargaming.' };
 
-        return await fetch(url, {
-            method: 'post',
-            body,
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        }).then(async res => {
-            const response = await res.json();
-            return response.status === 'error' ? ERR_RTN : response;
-        }).catch(() => ERR_API);
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        return await axios.post(url , body, { headers })
+            .then(async res => {
+                const response = await res.data;
+                return response.status === 'error' ? dataError : response;
+            })
+            .catch(() => apiError);
+
+        // return await fetch(url, {
+        //     method: 'post',
+        //     body,
+        //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        // }).then(async res => {
+        //     const response = await res.json();
+        //     return response.status === 'error' ? dataError : response;
+        // }).catch(() => apiError);
     }
 
     /**
@@ -44,10 +53,10 @@ export class Api {
     public static async chunkedApiCall(data: any[], url: string, requestId: string,
                                        fields: string, appId: string): Promise<{}|any|{result: string}> {
         const apiData = {};
-        const MAX_API_SIZE = 100;
+        const maxSize = 100;
 
-        for (let i = 0; i < data.length; i += MAX_API_SIZE) {
-            const dataChunk = data.slice(i, i + MAX_API_SIZE).join();
+        for (let i = 0; i < data.length; i += maxSize) {
+            const dataChunk = data.slice(i, i + maxSize).join();
 
             const bodyObj = { application_id: appId, [requestId]: dataChunk, fields };
             const json = await Api.callApi(url, new URLSearchParams(JSON.stringify(bodyObj)));

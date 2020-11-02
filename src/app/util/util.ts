@@ -45,13 +45,13 @@ export abstract class Util {
         let message = '';
         for (const text of messageArray) {
             if (message.length > MAX_SIZE) {
-                discordMessages.push(message);
+                discordMessages.push(message.replace(/_/g, '\\\_'));
                 message = '';
             }
-            message += `${text.replace(/_/g, '\\\_')}\n`;
+            message += `${text}\n`;
         }
 
-        discordMessages.push(message);
+        discordMessages.push(message.replace(/_/g, '\\\_'));
         return discordMessages;
     }
 }
