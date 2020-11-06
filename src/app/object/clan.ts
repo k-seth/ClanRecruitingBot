@@ -40,7 +40,7 @@ export class Clan {
      *      A string representation of the current clan
      */
     public getClanInfo(): string {
-        // <id> - <tag>
-        return `${this.id} - ${this._tag}`;
+        // <tag>: <id>
+        return `**${this._tag}**: ${this.id}`;
     }
 }

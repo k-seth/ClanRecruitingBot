@@ -35,33 +35,33 @@ export class ClanListService {
      * @private
      */
     private async readClanList(): Promise<void> {
-        if (!existsSync(this._clanListPath)) {
-            let writeList: Clan[] = [];
-            // Make sure the list is API safe
-            const sanitizedConfigList: number[] = this._configList.filter(clanId => /^[0-9]*$/.test(clanId))
-                .map(clanId => parseInt(clanId, 10));
-
-            if (!!sanitizedConfigList.length) {
-                const clanData = await Api.chunkedApiCall(sanitizedConfigList, `${this._api}/wot/clans/info/`, 'clan_id',
-                    'tag', this._appId);
-                if (clanData.result) {
-                    // This is a critical error, program functionality can not continue
-                    throw new ApiError('A critical error occurred loading the clan list');
-                }
-
-                // Filter out any invalid clans, and create the new clan list
-                writeList = Object.keys(clanData).filter(clanId => clanData[clanId] !== null)
-                    .map(clanId => parseInt(clanId, 10))
-                    .map(clanId => new Clan(clanId, clanData[clanId].tag));
-            }
-
-            // This write must be done synchronously, as we load it immediately after
-            writeFileSync(this._clanListPath, JSON.stringify(writeList));
+        if (existsSync(this._clanListPath)) {
+            this.clanList = await import(this._clanListPath).then((list: Clan[]) => {
+                return list;
+            });
         }
 
-        this.clanList = await import(this._clanListPath).then((list: Clan[]) => {
-            return list;
-        });
+        let writeList: Clan[] = [];
+        // Make sure the list is API safe
+        const sanitizedConfigList: number[] = this._configList.filter(clanId => /^[0-9]*$/.test(clanId))
+            .map(clanId => parseInt(clanId, 10));
+
+        if (!!sanitizedConfigList.length) {
+            const clanData = await Api.chunkedApiCall(sanitizedConfigList, `${this._api}/wot/clans/info/`, 'clan_id',
+                'tag', this._appId);
+            if (clanData.result) {
+                // This is a critical error, program functionality can not continue
+                throw new ApiError('A critical error occurred loading the clan list');
+            }
+
+            // Filter out any invalid clans, and create the new clan list
+            writeList = Object.keys(clanData).filter(clanId => clanData[clanId] !== null)
+                .map(clanId => parseInt(clanId, 10))
+                .map(clanId => new Clan(clanId, clanData[clanId].tag));
+        }
+
+        this.clanList = writeList;
+        createWriteStream(this._clanListPath).write(JSON.stringify(this.clanList), 'utf-8');
     }
 
     /**

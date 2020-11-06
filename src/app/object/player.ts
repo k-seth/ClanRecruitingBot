@@ -6,8 +6,7 @@ import { Clan } from './clan';
  */
 export class Player {
     private _status: PlayerStatus = PlayerStatus.Active;
-    private _wn8: string = null;
-    private _wotLabs: string = null;
+    private _wn8: number = null;
 
     /**
      * @param _clan
@@ -38,15 +37,13 @@ export class Player {
     public updateBasicInfo(name: string, clan: Clan): void {
         this._name = name;
         this._clan = clan;
-        // If assigning wotlabs, it will need to be wrapped in <>
-        this._wotLabs = `https://wotlabs.net/${this._region}/player/${this._name}`;
     }
 
     /**
      *
      *
      * @param status
-     *      The status of the player. Either 'Inactive', 'Below requirements' or `Active`
+     *      The status of the player
      */
     public setStatus(status: PlayerStatus): void {
         this._status = status;
@@ -57,7 +54,7 @@ export class Player {
      * @param wn8
      *      The updated wn8 of the player
      */
-    public setWn8(wn8: string): void {
+    public setWn8(wn8: number): void {
         this._wn8 = wn8;
     }
 
@@ -68,18 +65,32 @@ export class Player {
      *      A string containing the player's info
      */
     public getPlayerInfo(): string {
-        // <player> left <clan>
-        // RWN8: <wn8> -> <status/WotLabs>
-        return `${this._name} left ${this._clan.getTag()}\nRWN8: ${this._wn8} -> ${this._status === PlayerStatus.Active ? this._wotLabs : this._status}\n`;
+        // <player> (WN8: <wn8>)
+        // <status/WotLabs>
+        if (this._status === PlayerStatus.Active) {
+            return `${this._name} (WN8: ${this._wn8}\n<${this.getWotLabs()}>`;
+        }
+
+        return `${this._name} (WN8: ${this._wn8}\n${this._status}`;
     }
 
     /**
      * Gets the clan id of the clan the player is in
      *
      * @returns
-     *      The players clan id
+     *      The player's clan id
      */
     public getClanId(): number {
         return this._clan.id;
+    }
+
+    /**
+     * Provides the player's WotLabs link
+     *
+     * @return
+     *      A string containing the player's link
+     */
+    public getWotLabs(): string {
+        return `https://wotlabs.net/${this._region}/player/${this._name}`;
     }
 }

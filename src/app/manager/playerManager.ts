@@ -130,6 +130,10 @@ export class PlayerManager {
         return;
     }
 
+    // private buildPlayerRoster(members: any[], clanId: number, tag: string): Player[] {
+    //     members.
+    // }
+
     /**
      * A handler function which makes calls to functions to update rosters and construct the list of players that have left.
      * Output is expected to be Discord safe.
@@ -144,10 +148,18 @@ export class PlayerManager {
         this.checkChanges(oldRoster);
 
         const clanData = await Api.chunkedApiCall(this._clanListService.getApiList(), `${this._api}/wot/clans/info/`, 'clan_id',
-            'members.account_id,tag', this._config.application_id);
+            'members.account_id,members.account_name,tag', this._config.application_id);
         if (clanData.result) {
             return Util.discordify([clanData.result]);
         }
+
+        // TODO: This may actually be a spot to use a map. Key on a clan, value of Player[].
+        //  In theory, then I could support partial clan checking. Would a player need knowledge of its clan then?
+        playerRoster: Player[] = Object.keys(clanData).filter(clanId => clanData[clanId] !== null)
+            .map(clanId => parseInt(clanId, 10))
+            .map(clanId => this.buildPlayerRoster(clanData[clanId].members, clanId, clanData[clanId].tag));
+            // .map(clanId => new Clan(clanId, clanData[clanId].tag));
+
 
         const newRoster = this.buildNewRoster(clanData);
         this._playerListService.saveRoster(newRoster);
