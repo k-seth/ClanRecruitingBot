@@ -1,4 +1,4 @@
-import { RegionError } from '../error/RegionError';
+import { ServerError } from '../error/ServerError';
 
 /**
  * Utility class for miscellaneous helper methods
@@ -7,13 +7,13 @@ export abstract class Util {
     /**
      * Helper function for assigning the correct values for the various regions. Used for completing API URL
      *
-     * @param region
+     * @param server
      *      The server specified in the config that the data will work off of
      * @returns
      *      The necessary top level domain information
      */
-    public static determineRegionValues(region: string): string {
-        switch (region.toLowerCase()) {
+    public static determineApiDomain(server: string): string {
+        switch (server.toLowerCase()) {
             case 'na':
                 return '.com';
             case 'eu':
@@ -23,7 +23,7 @@ export abstract class Util {
             case 'sea':
                 return '.asia';
             default:
-                throw new RegionError('Invalid region selected');
+                throw new ServerError('Invalid server selected');
         }
     }
 

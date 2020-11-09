@@ -1,5 +1,7 @@
 import { Clan } from '../object/clan';
+import { Player } from '../object/player';
 import { ClanListService } from '../service/clanListService';
+import { ConfigService } from '../service/configService';
 import { Api } from '../util/api';
 import { Util } from '../util/util';
 
@@ -7,18 +9,13 @@ import { Util } from '../util/util';
  * Manages the Discord requests related to clan information.
  */
 export class ClanManager {
-    private readonly _okUpdate = '\nPlayer data will be updated on next check.';
-
     /**
-     * @param _api
-     *      The api endpoint to use
-     * @param _appId
-     *      The application ID used with the Wargaming API
+     * @param _configService
+     *      The service that handles program configuration
      * @param _clanListService
      *      The service that handles the list of tracked clans
      */
-    constructor(private readonly _api: string,
-                private readonly _appId: string,
+    constructor(private readonly _configService: ConfigService,
                 private readonly _clanListService: ClanListService
     ) {
     }
@@ -38,32 +35,16 @@ export class ClanManager {
         }
 
         // Make sure only inputs consisting solely of numbers and are not already tracked
-        const sanitizedInput: number[] = clansToAdd.filter((clanId: string) => /^[0-9]*$/.test(clanId))
+        const validClans: number[] = clansToAdd.filter((clanId: string) => /^[0-9]*$/.test(clanId))
             .map(clanId => parseInt(clanId, 10))
-            .filter(clanId => this._clanListService.getClanList().findIndex(clan => clan.id === clanId) === -1);
+            .filter(clanId => !this._clanListService.getClanList().has(clanId));
 
-        let newClans: Clan[] = [];
-
-        // If there are valid clans, make an api call
-        if (!!sanitizedInput.length) {
-            const clanData = await Api.chunkedApiCall(sanitizedInput, `${this._api}/wot/clans/info/`, 'clan_id',
-                'tag', this._appId);
-
-            if (clanData.result) {
-                return Util.discordify([clanData.result]);
-            }
-
-            newClans = sanitizedInput.filter(clanId => clanData[clanId] !== null)
-                .map(clanId => new Clan(clanId, clanData[clanId].tag));
-        }
-
-        if (!newClans.length) {
+        if (!validClans.length) {
             return Util.discordify(['None of the requested clans are valid.']);
         }
 
-        const response: string[] = this._clanListService.addTrackedClans(newClans);
+        const response: string[] = await this._clanListService.addClans(validClans);
         response.unshift('Successfully added:');
-        response.push(this._okUpdate);
         return Util.discordify(response);
     }
 
@@ -81,22 +62,17 @@ export class ClanManager {
             return Util.discordify(['No clans supplied.']);
         }
 
-        const clanList = this._clanListService.getClanList();
-
         // Filter out any non-numeric only inputs, and determine if they are in the currently tracked list
-        // TODO: It would be nice to pull the clan object, and send the list of them... But, then it would also be
-        //  nice to utilize set features like delete, since we would already have the correctly referenced object
-        const validClans: number[] = Array.from(clansToRemove).filter(clanId => /^[0-9]*$/.test(clanId))
-            .filter(clanId => clanList.findIndex(clan => clan.id === parseInt(clanId, 10)) !== -1)
-            .map(clanId => parseInt(clanId, 10));
+        const validClans: number[] = clansToRemove.filter(clanId => /^[0-9]*$/.test(clanId))
+            .map(clanId => parseInt(clanId, 10))
+            .filter(clanId => this._clanListService.getClanList().has(clanId));
 
         if (!validClans.length) {
             return Util.discordify(['None of the requested clans are valid.']);
         }
 
-        const response: string[] = this._clanListService.removeTrackedClans(validClans);
+        const response: string[] = this._clanListService.removeClans(validClans);
         response.unshift('Successfully removed:');
-        response.push(this._okUpdate);
         return Util.discordify(response);
     }
 
@@ -108,7 +84,9 @@ export class ClanManager {
      *      An array of Discord message(s) containing the info of each tracked clan
      */
     public showClanList(): string[] {
-        const readableClanList: string[] = this._clanListService.getClanList().map(clan => clan.getClanInfo());
+        const clans: Clan[] = Array.from(this._clanListService.getClanList().values());
+
+        const readableClanList: string[] = clans.map(clan => clan.getClanInfo());
         return Util.discordify(readableClanList);
     }
 }

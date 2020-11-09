@@ -1,21 +1,21 @@
 import test, { ExecutionContext } from 'ava';
-import { RegionError } from '../../app/error/RegionError';
+import { ServerError } from '../../app/error/ServerError';
 import { Util } from '../../app/util/util';
 
-const determineRegionValues = (t: ExecutionContext, input: string, expected: string) => {
-    const actual = Util.determineRegionValues(input);
+const determineApiDomain = (t: ExecutionContext, input: string, expected: string) => {
+    const actual = Util.determineApiDomain(input);
     t.is(actual, expected);
 };
 
-test('determineRegionValues na server', determineRegionValues, 'na', '.com');
-test('determineRegionValues eu server', determineRegionValues, 'eu', '.eu');
-test('determineRegionValues ru server', determineRegionValues, 'ru', '.ru');
-test('determineRegionValues sea server', determineRegionValues, 'sea', '.asia');
+test('determineApiDomain na server', determineApiDomain, 'na', '.com');
+test('determineApiDomain eu server', determineApiDomain, 'eu', '.eu');
+test('determineApiDomain ru server', determineApiDomain, 'ru', '.ru');
+test('determineApiDomain sea server', determineApiDomain, 'sea', '.asia');
 
 test('determineRegionValues invalid server', t => {
-    const error = t.throws(() => Util.determineRegionValues('sa'), {instanceOf: RegionError});
-    t.is(error.name, 'RegionError');
-    t.is(error.message, 'Invalid region selected');
+    const error = t.throws(() => Util.determineApiDomain('sa'), {instanceOf: ServerError});
+    t.is(error.name, 'ServerError');
+    t.is(error.message, 'Invalid server selected');
 });
 
 const discordify = (t: ExecutionContext, input: string[], expected: string[]) => {

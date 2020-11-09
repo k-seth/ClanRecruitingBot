@@ -16,61 +16,58 @@
 
 // The modules imported by the server
 import Discord, { Message } from 'discord.js';
-// @ts-ignore
-import config from './config.json';
 import { ClanManager } from './manager/clanManager';
 import { PlayerManager } from './manager/playerManager';
 import { ClanListService } from './service/clanListService';
+import { ConfigService } from './service/configService';
 import { PlayerListService } from './service/playerListService';
-import { Util } from './util/util';
-
-// Config constants
-const botConfig = config.bot;
-const commands = config.bot;
-const prefix: string = botConfig.prefix;
 
 // Other constants
 const bot: Discord.Client = new Discord.Client();
-
-const api = `https://api.worldoftanks${Util.determineRegionValues(config.app.server)}`;
-const appId: string = config.app.application_id;
-
-const clanListService: ClanListService = new ClanListService(config.clanList, api, appId);
+const configService: ConfigService = new ConfigService();
+const clanListService: ClanListService = new ClanListService(configService);
 const playerListService: PlayerListService = new PlayerListService();
-const clanManager: ClanManager = new ClanManager(api, appId, clanListService);
-const playerManager: PlayerManager = new PlayerManager(api, config.app, clanListService, playerListService);
+const clanManager: ClanManager = new ClanManager(configService, clanListService);
+const playerManager: PlayerManager = new PlayerManager(configService, clanListService, playerListService);
 
-// DISCORD FUNCTIONS
-
-bot.login(botConfig.token);
+bot.login(configService.token());
 bot.on('message', async (message: Message) => {
-    if (!message.content.startsWith(prefix) || message.author.bot) {
+    const restricted = configService.getRestrictedChannels();
+    const commands = configService.getCommands();
+
+    // If the message is sent in a channel the bot is not restricted to, ignore
+    if (!!restricted.size && !restricted.has(message.channel.id)) {
         return;
     }
 
-    const args: string[] = message.content.slice(prefix.length).trim().split(/ +/);
+    // If the message is not in command format or is from a bot, ignore
+    if (!message.content.startsWith(configService.getPrefix()) || message.author.bot) {
+        return;
+    }
+
+    const args: string[] = message.content.slice(configService.getPrefix().length).trim().split(/ +/);
     const command: string = args.shift().toLowerCase();
 
-    // Ignore invalid commands
-    if (commands.indexOf(command) === -1) {
+    // If the command is not recognized, ignore
+    if (!Array.from(configService.getCommands().values()).includes(command)) {
         return;
     }
 
     let responseArray: string[];
-    if (command === commands.list) {
+    if (command === commands.get('list')) {
         responseArray = clanManager.showClanList();
-    } else if (command === commands.help) {
+    } else if (command === commands.get('help')) {
         message.channel.send('Command coming soon!');
-    } else if (command === commands.add) {
-        // Pre-emptively remove duplicates
-        const set = new Set<string>(args);
-        responseArray = await clanManager.addClans(Array.from(set));
-    } else if (command === commands.remove) {
+    } else if (command === commands.get('add')) {
+        responseArray = await clanManager.addClans(args);
+    } else if (command === commands.get('remove')) {
         // Pre-emptively remove duplicates
         const set = new Set<string>(args);
         responseArray = await clanManager.removeClans(Array.from(set));
-    } else if (command === commands.seed || command === commands.check) {
-        responseArray = await playerManager.updateData(command === commands.check);
+    } else if (command === commands.get('seed')) {
+        responseArray = await playerManager.updateData(false);
+    } else if (command === commands.get('check')) {
+        responseArray = await playerManager.updateData(true);
     }
 
     // Send the accumulated responses from the program

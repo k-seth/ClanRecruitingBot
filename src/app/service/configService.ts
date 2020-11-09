@@ -1,0 +1,118 @@
+import { existsSync, readFileSync } from 'fs';
+import path from 'path';
+import { ConfigError } from '../error/ConfigError';
+import { Config } from '../object/config';
+import { Util } from '../util/util';
+
+/**
+ * A service class responsible for providing and updating the bot configuration
+ */
+export class ConfigService {
+    private readonly _configPath = path.join(__dirname, '..', 'config.json');
+
+    private readonly _config: Config;
+    private readonly _api: string;
+
+    private readonly _restrictedChannels: Set<string>;
+    private readonly _commands: Map<string, string>;
+
+    constructor() {
+        // This may seem like a lot of extra work now, but there is a future plan for this
+        // Eventually (and completely unnecessarily) I'd like to add runtime configuration changes
+        if (!existsSync(this._configPath)) {
+            throw new ConfigError('Configuration file does not exist');
+        }
+        this._config = JSON.parse(readFileSync(this._configPath, 'utf-8'));
+
+        // TODO: Create and run a validator class that ensures the config file is well formed
+
+        this._api = `https://api.worldoftanks${Util.determineApiDomain(this._config.app.server)}`;
+        this._restrictedChannels = new Set<string>(this._config.bot.limit_to);
+        this._commands = new Map<string, string>(Object.entries(this._config.bot.commands));
+    }
+
+    // Configs that will never change. These have non-getter/setter names
+
+    /**
+     * Gets the base api endpoint to use when calling the Wargaming API
+     *
+     * @returns
+     *      The Wargaming API endpoint to call
+     */
+    public apiEndpoint(): string {
+        return this._api;
+    }
+
+    /**
+     * Gets the application id used for api calls
+     *
+     * @returns
+     *      The application id to use during API calls
+     */
+    public appId(): string {
+        return this._config.app.application_id;
+    }
+
+    /**
+     * Gets the clan list in the config file to use as the base list
+     *
+     * @returns
+     *      The default list of clans in the config file
+     */
+    public configList(): string[] {
+        return Array.from(this._config.clanList);
+    }
+
+    /**
+     * Gets the Wargaming server being used
+     *
+     * @returns
+     *      The Wargaming server
+     */
+    public server(): string {
+        return this._config.app.server;
+    }
+
+    /**
+     * Gets the Discord bot token
+     *
+     * @returns
+     *      The token required to connect to Discord
+     */
+    public token(): string {
+        return this._config.bot.token;
+    }
+
+    // Configs that can change. These will use a more boilerplate naming scheme
+
+    /**
+     * Gets the bot commands
+     *
+     * @returns
+     *      A map of the commands usable by the bot
+     */
+    public getCommands(): Map<string, string> {
+        return new Map<string, string>(this._commands);
+    }
+
+    /**
+     * Gets the command prefix
+     *
+     * @returns
+     *      The prefix used by the bot
+     */
+    public getPrefix(): string {
+        return this._config.bot.prefix;
+    }
+
+    /**
+     * Gets the set of channels the bot is restricted to reading messages in.
+     * This is intended to supplement Discord permissions.
+     *
+     * @returns
+     *      The set of channels the bot is restricted to reading
+     */
+    public getRestrictedChannels(): Set<string> {
+        return new Set<string>(this._restrictedChannels);
+    }
+}

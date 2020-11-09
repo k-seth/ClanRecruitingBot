@@ -19,7 +19,9 @@
             "add": "add",
             "remove": "remove",
             "help": "help"
-        }
+        },
+        "limit_to": [
+        ]
     },
     "clanList": [
         1000016749,
