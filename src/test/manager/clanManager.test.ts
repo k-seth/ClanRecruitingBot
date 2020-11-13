@@ -1,30 +1,34 @@
-import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox, SinonStubbedInstance } from 'sinon';
-import { ClanManager } from '../../app/manager/clanManager';
+import test, { ExecutionContext } from 'ava';
+import { ApiError } from '../../app/error/ApiError';
 import { Clan } from '../../app/object/clan';
+import { ApiService } from '../../app/service/apiService';
 import { ClanListService } from '../../app/service/clanListService';
-import { Api } from '../../app/util/api';
+import { ClanManager } from '../../app/manager/clanManager';
 
 let sandbox: SinonSandbox;
 let clanListService: SinonStubbedInstance<ClanListService>;
+let apiService: SinonStubbedInstance<ApiService>;
 let clanManager: ClanManager;
 
-const testClanList: Clan[] = [
-    new Clan(123, 'TesT'),
-    new Clan(456, '_TAG_'),
-    new Clan(789, '_clan')
-];
+let testClanList: Map<number, Clan>;
 
 let addTrackedClansResponse: string[];
 let removeTrackedClansResponse: string[];
 
-const addedMessage = ['Successfully added:\n1234\n5678\n\nPlayer data will be updated on next check.\n'];
-const removedMessage = ['Successfully removed:\n123\n456\n\nPlayer data will be updated on next check.\n'];
+const addedMessage = ['Successfully added:\n1234\n5678\n'];
+const removedMessage = ['Successfully removed:\n123\n456\n'];
 
 test.beforeEach(() => {
     sandbox = sinon.createSandbox();
+    apiService = sandbox.createStubInstance(ApiService);
     clanListService = sandbox.createStubInstance(ClanListService);
-    clanManager = new ClanManager(null, null, clanListService as unknown as ClanListService);
+    clanManager = new ClanManager(apiService as unknown as ApiService, null, clanListService as unknown as ClanListService);
+
+    testClanList = new Map<number, Clan>();
+    testClanList.set(123, new Clan(123, 'TesT', null));
+    testClanList.set(456, new Clan(456, '_TAG_', null));
+    testClanList.set(789, new Clan(789, '_clan', null));
 
     addTrackedClansResponse = ['1234', '5678'];
     removeTrackedClansResponse = ['123', '456'];
@@ -36,7 +40,8 @@ test.afterEach(() => {
 
 const addClans = async (t: ExecutionContext, clansToAdd: string[], expected: string[]) => {
     clanListService.getClanList.returns(testClanList);
-    clanListService.addTrackedClans.returns(addTrackedClansResponse);
+    clanListService.addClans.returns(addTrackedClansResponse);
+    apiService.fetchClanData.returns(testClanList);
     const actual = await clanManager.addClans(clansToAdd);
 
     t.deepEqual(actual, expected);
@@ -46,27 +51,24 @@ test('addClans empty input', addClans, [], ['No clans supplied.\n']);
 test('addClans invalid format input', addClans, ['testClan', '12345t'], ['None of the requested clans are valid.\n']);
 test('addClans existing clans in input', addClans, ['123', '456'], ['None of the requested clans are valid.\n']);
 
-const addClansWithApi = async (t: ExecutionContext, clansToAdd: string[], apiReturn: {}, expected: string[]) => {
-    clanListService.getClanList.returns(testClanList);
-    clanListService.addTrackedClans.returns(addTrackedClansResponse);
+// These all need to be serial due to the extra stubbing of the API call
+test.serial('addClans valid input list', addClans, ['1234', '5678'], addedMessage);
+test.serial('addClans mixed validity input list', addClans, ['1234', '5678', '1111'], addedMessage);
 
-    sandbox.stub(Api, 'chunkedApiCall').returns(apiReturn);
-    const actual = await clanManager.addClans(clansToAdd);
+test.serial('addClans api error', async t => {
+    const expected = ['Error\n'];
+
+    clanListService.getClanList.returns(testClanList);
+    apiService.fetchClanData.throws(new ApiError('Error'));
+    const actual = await clanManager.addClans(['1234', '5678']);
 
     t.deepEqual(actual, expected);
-};
+});
 
-// These all need to be serial due to the extra stubbing of the API call
-test.serial('addClans valid input list', addClansWithApi,
-    ['1234', '5678'], { 1234: { tag: 'some'}, 5678: { tag: 'thing' }}, addedMessage);
-test.serial('addClans mixed validity input list', addClansWithApi,
-    ['1234', '5678', '1111'], { 1234: { tag: 'some'}, 5678: { tag: 'thing' }, 1111: null}, addedMessage);
-test.serial('addClans api error', addClansWithApi, ['1234', '5678'], { result: 'Error' }, ['Error\n']);
-
-const removeClans = async (t: ExecutionContext, clansToRemove: string[], expected: string[]) => {
+const removeClans = (t: ExecutionContext, clansToRemove: string[], expected: string[]) => {
     clanListService.getClanList.returns(testClanList);
-    clanListService.removeTrackedClans.returns(removeTrackedClansResponse);
-    const actual = await clanManager.removeClans(clansToRemove);
+    clanListService.removeClans.returns(removeTrackedClansResponse);
+    const actual = clanManager.removeClans(clansToRemove);
 
     t.deepEqual(actual, expected);
 };
@@ -88,4 +90,4 @@ const showClanList = (t: ExecutionContext, expected: string[]) => {
     t.deepEqual(actual, expected);
 };
 
-test('showClanList', showClanList, ['123 - TesT\n456 - \\_TAG\\_\n789 - \\_clan\n']);
+test('showClanList', showClanList, ['**TesT**: 123\n**\\_TAG\\_**: 456\n**\\_clan**: 789\n']);

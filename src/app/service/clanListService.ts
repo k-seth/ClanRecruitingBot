@@ -1,10 +1,9 @@
 import { createWriteStream, existsSync, readFileSync } from 'fs';
-import path from 'path';
-import { ApiError } from '../error/ApiError';
 import { Clan } from '../object/clan';
-import { Api } from '../util/api';
+import { ApiService } from './apiService';
 import { ConfigService } from './configService';
-import {Player} from "../object/player";
+import { Player } from '../object/player';
+import path from 'path';
 
 /**
  * A service class responsible for providing the list of tracked clans, as well as all reading or writing operations
@@ -14,12 +13,15 @@ export class ClanListService {
     private readonly _clanListPath: string = path.join(__dirname, '..', 'clan_list.json');
 
     /**
+     * @param _apiService
+     *      The service that handles api transactions
      * @param _configService
      *      The service that handles program configuration
      */
-    constructor(private _configService: ConfigService
+    constructor(private readonly _apiService: ApiService,
+                private readonly _configService: ConfigService
     ) {
-        this.readClanList().then(list => this._clanList = list);
+        void this.readClanList().then(list => this._clanList = list);
     }
 
     /**
@@ -34,14 +36,14 @@ export class ClanListService {
         if (existsSync(this._clanListPath)) {
             // TODO: Determine if storing as a map is the best option
             // Also, with all the changes make sure this actually works now
-            return JSON.parse(readFileSync(this._clanListPath, 'utf-8'));
+            return JSON.parse(readFileSync(this._clanListPath, 'utf-8')) as Map<number, Clan>;
         }
 
         // Make sure the list is API safe
         const validClans: number[] = this._configService.configList().filter(clanId => /^[0-9]*$/.test(clanId))
             .map(clanId => parseInt(clanId, 10));
 
-        const clanData = await this.fetchClanData(validClans);
+        const clanData = await this._apiService.fetchClanData(validClans);
 
         // TODO: Verify a thrown error above will not cause file creation
         createWriteStream(this._clanListPath).write(JSON.stringify(clanData), 'utf-8');
@@ -59,87 +61,93 @@ export class ClanListService {
     }
 
     /**
-     * Adds clans to the list of tracked clans based on the clans in the delta
+     * Adds new clans to the list of tracked clans
      *
-     * @param idList
+     * @param newClans
      *      The list of clans to add to the tracked clans
      * @returns
-     *      An array with all the affected clans
+     *      A map of all the added clans
      */
-    public async addClans(idList: number[]): Promise<string[]> {
-        let clanData: Map<number, Clan>;
-        try {
-            clanData = await this.fetchClanData(idList);
-        } catch (error) {
-            return [error.message];
-        }
-
-        if (!clanData.size) {
-            return ['No clans supplied.'];
-        }
-
-        for (const [id, clan] of clanData) {
+    public addClans(newClans: Map<number, Clan>): Map<number, Clan> {
+        const affectedClans: Map<number, Clan> = new Map<number, Clan>();
+        for (const [id, clan] of newClans) {
             this._clanList.set(id, clan);
+            // This may seem a bit redundant, and arguably yes it is. But, the function should
+            // be the authority on what actions occurred. It should not rely on the input
+            affectedClans.set(id, this._clanList.get(id));
         }
 
         createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
-        return Array.from(clanData.keys()).map(id => id.toString());
+        return affectedClans;
     }
 
     /**
-     * Removes clans from the list of tracked clans based on the clans in the delta
+     * Removes clans from the list of tracked clans
      *
      * @param idList
      *      The list of clans to remove from the tracked clans
      * @returns
-     *      An array with all the affected clans
+     *      A map of all the removed clans
      */
-    public removeClans(idList: number[]): string[] {
+    public removeClans(idList: number[]): Map<number, Clan> {
+        const affectedClans: Map<number, Clan> = new Map<number, Clan>();
         for (const id of idList) {
+            affectedClans.set(id, this._clanList.get(id));
             this._clanList.delete(id);
         }
 
         createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
-        return idList.map(clanId => clanId.toString());
+        return affectedClans;
     }
 
     /**
-     * Constructs a map of the requests clans
+     * Determines the new players and those that left for the clan, and updates the roster
      *
-     * @param idList
-     *      The list of clan ids to get data for
-     * @returns
-     *      A map of the requested clans
-     * @private
+     * @param clanId
+     *      The id of the clan to update
+     * @param newRoster
+     *      The new roster for each clan
+     * @return
+     *      An array of string containing the information of the players that left, or an empty array if none
      */
-    private async fetchClanData(idList: number[]): Promise<Map<number, Clan>> {
-        const apiResult = await Api.chunkedApiCall(idList, `${this._configService.apiEndpoint()}/wot/clans/info/`,
-            'clan_id', 'members.account_id,members.account_name,tag', this._configService.appId());
+    public updateClanRoster(clanId: number, newRoster: Map<number, Player>): string[] {
+        // TODO: This is a disaster right now
+        const result: string[] = [];
+        const clan: Clan = this._clanList.get(clanId);
+        const clanRoster = clan.getRoster();
+        const newPlayers: Map<number, Player> = new Map<number, Player>();
+        const leftPlayers: Map<number, Player> = new Map<number, Player>();
 
-        if (apiResult.result) {
-            throw ApiError(apiResult.result);
+        // Determine the new players to the clan
+        const newPlayerIds: number[] = Array.from(newRoster.keys()).filter(playerId => !clanRoster.has(playerId));
+        for (const playerId of newPlayerIds) {
+            newPlayers.set(playerId, newRoster.get(playerId));
         }
 
-        const clanData: Map<number, Clan> = new Map<number, Clan>();
-
-        for (const id of Object.keys(apiResult)) {
-            const clanId: number = parseInt(id, 10);
-            if (apiResult[clanId] === null) {
-                continue;
-            }
-
-            const data: { tag: string, members: any[] } = clanData[clanId];
-            const roster: Map<number, Player> = new Map<number, Player>();
-
-            for (const player of data.members) {
-                roster.set(player.account_id, new Player(player.account_name, this._configService.server(), player.account_id));
-            }
-
-            const clan = new Clan(clanId, data.tag, roster);
-            clanData.set(clanId, clan);
+        // Determine the players that left the clan
+        const leftPlayerIds: number[] = Array.from(clanRoster.keys()).filter(playerId => !newRoster.has(playerId));
+        for (const playerId of leftPlayerIds) {
+            leftPlayers.set(playerId, clanRoster.get(playerId));
         }
 
-        return clanData;
+        if (newPlayers.size || leftPlayers.size) {
+            clan.updateRoster(newPlayers, leftPlayers);
+        }
+
+        // Get the information on the players that have left
+        // TODO: Sort by WN8
+        if (leftPlayers.size) {
+            result.push(`**${ clan.getTag() }**`);
+
+            for (const player of leftPlayers.values()) {
+                result.push(player.getPlayerInfo());
+            }
+            result.push('\n');
+        }
+
+        createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
+
+        return result;
     }
 
     /**

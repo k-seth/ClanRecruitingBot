@@ -13,7 +13,7 @@ test('determineApiDomain ru server', determineApiDomain, 'ru', '.ru');
 test('determineApiDomain sea server', determineApiDomain, 'sea', '.asia');
 
 test('determineRegionValues invalid server', t => {
-    const error = t.throws(() => Util.determineApiDomain('sa'), {instanceOf: ServerError});
+    const error = t.throws(() => Util.determineApiDomain('sa'), { instanceOf: ServerError });
     t.is(error.name, 'ServerError');
     t.is(error.message, 'Invalid server selected');
 });

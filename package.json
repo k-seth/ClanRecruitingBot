@@ -17,14 +17,17 @@
   },
   "scripts": {
     "start": "tsc && node -r esm dist/app/app.js",
-    "test": "tsc && nyc ava"
+    "test": "tsc && nyc ava",
+    "lint": "eslint . --ext .ts"
   },
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
+    "@typescript-eslint/eslint-plugin": "^4.7.0",
+    "@typescript-eslint/parser": "^4.7.0",
     "ava": "^3.11.1",
+    "eslint": "^7.13.0",
     "nyc": "^15.1.0",
     "sinon": "^9.1.0",
-    "tslint": "^6.1.3",
     "typescript": "^4.0.3"
   },
   "ava": {

@@ -1,5 +1,4 @@
 import { PlayerStatus } from '../util/util';
-import { Clan } from './clan';
 
 /**
  * A class representing a player
@@ -28,10 +27,8 @@ export class Player {
      *
      * @param name
      *      The player name
-     * @param clan
-     *      The clan the player is currently in
      */
-    public updateBasicInfo(name: string, clan: Clan): void {
+    public updateBasicInfo(name: string): void {
         this._name = name;
     }
 
@@ -64,10 +61,10 @@ export class Player {
         // <player> (WN8: <wn8>)
         // <status/WotLabs>
         if (this._status === PlayerStatus.Active) {
-            return `${this._name} (WN8: ${this._wn8}\n<${this.getWotLabs()}>`;
+            return `${ this._name } (WN8: ${ this._wn8 }\n<${ this.getWotLabs() }>`;
         }
 
-        return `${this._name} (WN8: ${this._wn8}\n${this._status}`;
+        return `${ this._name } (WN8: ${ this._wn8 }\n${ this._status }`;
     }
 
     /**
@@ -77,6 +74,6 @@ export class Player {
      *      A string containing the player's link
      */
     public getWotLabs(): string {
-        return `https://wotlabs.net/${this._server}/player/${this._name}`;
+        return `https://wotlabs.net/${ this._server }/player/${ this._name }`;
     }
 }

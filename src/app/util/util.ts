@@ -14,16 +14,16 @@ export abstract class Util {
      */
     public static determineApiDomain(server: string): string {
         switch (server.toLowerCase()) {
-            case 'na':
-                return '.com';
-            case 'eu':
-                return '.eu';
-            case 'ru':
-                return '.ru';
-            case 'sea':
-                return '.asia';
-            default:
-                throw new ServerError('Invalid server selected');
+        case 'na':
+            return '.com';
+        case 'eu':
+            return '.eu';
+        case 'ru':
+            return '.ru';
+        case 'sea':
+            return '.asia';
+        default:
+            throw new ServerError('Invalid server selected');
         }
     }
 
@@ -45,13 +45,13 @@ export abstract class Util {
         let message = '';
         for (const text of messageArray) {
             if (message.length > MAX_SIZE) {
-                discordMessages.push(message.replace(/_/g, '\\\_'));
+                discordMessages.push(message.replace(/_/g, '\\_'));
                 message = '';
             }
-            message += `${text}\n`;
+            message += `${ text }\n`;
         }
 
-        discordMessages.push(message.replace(/_/g, '\\\_'));
+        discordMessages.push(message.replace(/_/g, '\\_'));
         return discordMessages;
     }
 }

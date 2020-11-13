@@ -16,21 +16,25 @@
 
 // The modules imported by the server
 import Discord, { Message } from 'discord.js';
-import { ClanManager } from './manager/clanManager';
-import { PlayerManager } from './manager/playerManager';
+import { ApiService } from './service/apiService';
 import { ClanListService } from './service/clanListService';
+import { ClanManager } from './manager/clanManager';
 import { ConfigService } from './service/configService';
 import { PlayerListService } from './service/playerListService';
+import { PlayerManager } from './manager/playerManager';
 
 // Other constants
 const bot: Discord.Client = new Discord.Client();
 const configService: ConfigService = new ConfigService();
-const clanListService: ClanListService = new ClanListService(configService);
-const playerListService: PlayerListService = new PlayerListService();
-const clanManager: ClanManager = new ClanManager(configService, clanListService);
-const playerManager: PlayerManager = new PlayerManager(configService, clanListService, playerListService);
+const apiService: ApiService = new ApiService(configService);
+const clanListService: ClanListService = new ClanListService(apiService, configService);
+// const playerListService: PlayerListService = new PlayerListService();
+const clanManager: ClanManager = new ClanManager(apiService, configService, clanListService);
+const playerManager: PlayerManager = new PlayerManager(apiService, configService, clanListService);
 
-bot.login(configService.token());
+void bot.login(configService.token());
+
+// eslint-disable-next-line complexity
 bot.on('message', async (message: Message) => {
     const restricted = configService.getRestrictedChannels();
     const commands = configService.getCommands();
@@ -57,17 +61,17 @@ bot.on('message', async (message: Message) => {
     if (command === commands.get('list')) {
         responseArray = clanManager.showClanList();
     } else if (command === commands.get('help')) {
-        message.channel.send('Command coming soon!');
+        await message.channel.send('Command coming soon!');
     } else if (command === commands.get('add')) {
         responseArray = await clanManager.addClans(args);
     } else if (command === commands.get('remove')) {
         // Pre-emptively remove duplicates
         const set = new Set<string>(args);
-        responseArray = await clanManager.removeClans(Array.from(set));
+        responseArray = clanManager.removeClans(Array.from(set));
     } else if (command === commands.get('seed')) {
-        responseArray = await playerManager.updateData(false);
+        responseArray = await playerManager.updatePlayerData(false);
     } else if (command === commands.get('check')) {
-        responseArray = await playerManager.updateData(true);
+        responseArray = await playerManager.updatePlayerData(true);
     }
 
     // Send the accumulated responses from the program

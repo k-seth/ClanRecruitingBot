@@ -43,15 +43,6 @@ https://github.com/k-seth/ClanRecruitingBot/wiki/Commands
 2. Enter `sh run.sh`
 3. The bot will now be active in Discord
 
-### Major Changes
-- New commands for viewing and changing the clans the bot checks
-- Improved handling of some errors to reduce crashes, and inform user about critical errors
-- Showing the list of all tracked clans includes the clan tag now
-
-### Trouble shooting
-Below is a list of issues I have encountered in my testing. If something comes up that isn't listed, feel free to open an issue so that I can look into it. Specific error output and steps to reproduce the issue would be helpful.  
-  
-- Unknown
   
 ### Known limitations  
 - The server is sensitive to internet disconnections

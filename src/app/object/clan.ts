@@ -74,6 +74,6 @@ export class Clan {
      */
     public getClanInfo(): string {
         // <tag>: <id>
-        return `**${this._tag}**: ${this.id}`;
+        return `**${ this._tag }**: ${ this.id }`;
     }
 }

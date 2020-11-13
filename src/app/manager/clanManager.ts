@@ -1,8 +1,7 @@
+import { ApiService } from '../service/apiService';
 import { Clan } from '../object/clan';
-import { Player } from '../object/player';
 import { ClanListService } from '../service/clanListService';
 import { ConfigService } from '../service/configService';
-import { Api } from '../util/api';
 import { Util } from '../util/util';
 
 /**
@@ -10,12 +9,15 @@ import { Util } from '../util/util';
  */
 export class ClanManager {
     /**
+     * @param _apiService
+     *      The service that handles api transactions
      * @param _configService
      *      The service that handles program configuration
      * @param _clanListService
      *      The service that handles the list of tracked clans
      */
-    constructor(private readonly _configService: ConfigService,
+    constructor(private readonly _apiService: ApiService,
+                private readonly _configService: ConfigService,
                 private readonly _clanListService: ClanListService
     ) {
     }
@@ -43,9 +45,21 @@ export class ClanManager {
             return Util.discordify(['None of the requested clans are valid.']);
         }
 
-        const response: string[] = await this._clanListService.addClans(validClans);
-        response.unshift('Successfully added:');
-        return Util.discordify(response);
+        let clanData: Map<number, Clan>;
+        try {
+            clanData = await this._apiService.fetchClanData(validClans);
+        } catch (error) {
+            return Util.discordify([error.message]);
+        }
+
+        if (!clanData.size) {
+            return Util.discordify(['None of the requested clans are valid.']);
+        }
+
+        const action: string[] = ['Successfully added:'];
+        // TODO: I broke this... Again
+        const response: string[] = this._clanListService.addClans(clanData);
+        return Util.discordify(action.concat(response));
     }
 
     /**
@@ -57,7 +71,7 @@ export class ClanManager {
      * @returns
      *      An array containing the result of the removal action
      */
-    public async removeClans(clansToRemove: string[]): Promise<string[]> {
+    public removeClans(clansToRemove: string[]): string[] {
         if (!clansToRemove.length) {
             return Util.discordify(['No clans supplied.']);
         }
@@ -71,9 +85,10 @@ export class ClanManager {
             return Util.discordify(['None of the requested clans are valid.']);
         }
 
+        const action: string[] = ['Successfully removed:'];
+        // TODO: I broke this... Again
         const response: string[] = this._clanListService.removeClans(validClans);
-        response.unshift('Successfully removed:');
-        return Util.discordify(response);
+        return Util.discordify(action.concat(response));
     }
 
     /**

@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'fs';
-import path from 'path';
-import { ConfigError } from '../error/ConfigError';
 import { Config } from '../object/config';
+import { ConfigError } from '../error/ConfigError';
 import { Util } from '../util/util';
+import path from 'path';
 
 /**
  * A service class responsible for providing and updating the bot configuration
@@ -22,16 +22,16 @@ export class ConfigService {
         if (!existsSync(this._configPath)) {
             throw new ConfigError('Configuration file does not exist');
         }
-        this._config = JSON.parse(readFileSync(this._configPath, 'utf-8'));
+        this._config = JSON.parse(readFileSync(this._configPath, 'utf-8')) as Config;
 
         // TODO: Create and run a validator class that ensures the config file is well formed
 
-        this._api = `https://api.worldoftanks${Util.determineApiDomain(this._config.app.server)}`;
+        this._api = `https://api.worldoftanks${ Util.determineApiDomain(this._config.app.server) }`;
         this._restrictedChannels = new Set<string>(this._config.bot.limit_to);
         this._commands = new Map<string, string>(Object.entries(this._config.bot.commands));
     }
 
-    // Configs that will never change. These have non-getter/setter names
+    // Readonly configs. These use more unique names
 
     /**
      * Gets the base api endpoint to use when calling the Wargaming API
@@ -83,7 +83,7 @@ export class ConfigService {
         return this._config.bot.token;
     }
 
-    // Configs that can change. These will use a more boilerplate naming scheme
+    // Editable configs. These will use a more boilerplate naming scheme
 
     /**
      * Gets the bot commands
