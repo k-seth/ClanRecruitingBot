@@ -3,7 +3,7 @@ import { Clan } from '../object/clan';
 import { ClanListService } from '../service/clanListService';
 import { ConfigService } from '../service/configService';
 import { Player } from '../object/player';
-import { Util } from '../util/util';
+import { RosterUpdate } from '../util/interfaces';
 
 /**
  * Manages the Discord requests related to player information
@@ -25,7 +25,6 @@ export class PlayerManager {
 
     /**
      * A handler function which makes calls to functions to update rosters and construct the list of players that have left.
-     * Output is expected to be Discord safe.
      *
      * @returns
      *      An array containing one or more strings representing the result of the request
@@ -35,7 +34,7 @@ export class PlayerManager {
         try {
             clanData = await this._apiService.fetchClanData(this._clanListService.getApiList());
         } catch (error) {
-            return Util.discordify([error.message]);
+            return [error.message] as string[];
         }
 
 
@@ -51,10 +50,10 @@ export class PlayerManager {
 
 
         if (!result.length) {
-            return Util.discordify(['No players have left since the last check.']);
+            return ['No players have left since the last check.'];
         }
 
-        return Util.discordify(result);
+        return result;
     }
 
     /**
@@ -68,10 +67,21 @@ export class PlayerManager {
         try {
             clanData = await this._apiService.fetchClanData(this._clanListService.getApiList());
         } catch (error) {
-            return Util.discordify([error.message]);
+            return [error.message] as string[];
         }
 
+        const playerData: Map<number, RosterUpdate> = new Map<number, RosterUpdate>();
+        const clanList = this._clanListService.getClanList();
 
-        return Util.discordify(['New data has been saved.']);
+        // Since this is a complete refresh, remove the entire old roster and add the new one
+        for (const [id, clan] of clanData) {
+            const update: RosterUpdate = { remove: clanList.get(id).getRoster(), add: clan.getRoster() };
+            playerData.set(id, update);
+        }
+
+        // Drop the return value, since the Discord message does not use it
+        void this._clanListService.updateClanRoster(playerData);
+
+        return ['New player data has been saved.'];
     }
 }

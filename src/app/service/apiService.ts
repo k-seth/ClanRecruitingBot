@@ -1,4 +1,4 @@
-import { ClanApi, PlayerApi } from '../object/apiResult';
+import { ClanDetails, PlayerDetails } from '../util/interfaces';
 import { ApiError } from '../error/ApiError';
 import { Clan } from '../object/clan';
 import { ConfigService } from './configService';
@@ -10,7 +10,8 @@ import axios from 'axios';
  */
 export class ApiService {
     /**
-     * @param {ConfigService} _configService
+     * @param _configService
+     *      The service that handles program configuration
      */
     constructor(private readonly _configService: ConfigService) {
     }
@@ -43,25 +44,26 @@ export class ApiService {
     }
 
     /**
-     * A simple API call using fetch. Uses GET to retrieve the Wotlabs page for the player
+     * TODO: Not yet implemented.
+     * A simple API call using fetch. Uses GET to retrieve the WoTLabs page for the player
      *
      * @param url
      *      The url to fetch the data from
      * @returns
-     *      A string which is a raw version of the player's Wotlab page
+     *      A string which is a raw version of the player's WoTLab page
      */
     private static async callWotlabs(url): Promise<string> {
-        const apiError = 'An unexpected error occurred contacting Wotlabs';
+        const apiError = 'An unexpected error occurred contacting WoTLabs';
 
         const headers = { "Content-Type": "text/html" };
         return await axios.get(url, { headers })
-            .then(async res => await res.text())
+            .then(async res => await res.data() as string)
             .catch(() => { throw new ApiError(apiError); });
     }
 
     /**
      * Helper function to make chunked calls to the API to prevent making calls that are too large.
-     * To ensure limit safety, all API calls should go though this function.
+     * To ensure limit safety, all Wargaming API calls should go though this function.
      *
      * @param data
      *      The array of data that needs to be chunked
@@ -79,8 +81,8 @@ export class ApiService {
         url: string,
         requestId: string,
         fields: string,
-    ): Promise<{ [id: string]: any }> {
-        const apiData: { [id: string]: ClanApi|PlayerApi } = {};
+    ): Promise<any> {
+        const apiData: { [id: string]: ClanDetails|PlayerDetails } = {};
         const maxSize = 100;
 
         for (let i = 0; i < data.length; i += maxSize) {
@@ -95,7 +97,7 @@ export class ApiService {
     }
 
     /**
-     * Constructs a map of the requests clans
+     * Constructs a map of the requested clans
      *
      * @param idList
      *      The list of clan ids to get data for
@@ -103,25 +105,25 @@ export class ApiService {
      *      A map of the requested clans
      */
     public async fetchClanData(idList: number[]): Promise<Map<number, Clan>> {
-        const clanResult: { [id: string]: ClanApi } = await this.chunkedApiCall(idList,
+        const clanResult: ClanDetails = await this.chunkedApiCall(idList,
             `${ this._configService.apiEndpoint() }/wot/clans/info/`, 'clan_id',
-            'members.account_id,members.account_name,tag');
-
-        // const playerResult: { [id: string]: PlayerApi } = await this.chunkedApiCall(idList,
-        //     `${ this._configService.apiEndpoint() }/wot/account/info/`, 'account_id', 'nickname,last_battle_time');
+            'members.account_id,members.account_name,tag,is_clan_disbanded');
 
         const clanData: Map<number, Clan> = new Map<number, Clan>();
 
         for (const clanId of idList) {
-            if (clanResult[clanId] === null) {
+            const data = clanResult[clanId];
+
+            // Drop clans that do not exist or that have been disbanded
+            if (data === null || data.is_clan_disbanded) {
                 continue;
             }
 
-            const data: ClanApi = clanResult[clanId];
             const roster: Map<number, Player> = new Map<number, Player>();
 
             for (const player of data.members) {
-                roster.set(player.account_id, new Player(player.account_name, this._configService.server(), player.account_id));
+                const id: number = player.account_id;
+                roster.set(id, new Player(player.account_name, this._configService.server(), id));
             }
 
             const clan = new Clan(clanId, data.tag, roster);
@@ -132,7 +134,10 @@ export class ApiService {
     }
 
 
-    // public async fetchPlayerData(): Promise<> {
-    //
-    // }
+    public async fetchPlayerData(idList): Promise<> {
+        // This is a huge waster of an API call, but Wargaming does not provide last battle time via clan member data
+        const playerResult: PlayerDetails = await this.chunkedApiCall(idList,
+            `${ this._configService.apiEndpoint() }/wot/account/info/`, 'account_id', 'last_battle_time');
+
+    }
 }

@@ -20,8 +20,9 @@ import { ApiService } from './service/apiService';
 import { ClanListService } from './service/clanListService';
 import { ClanManager } from './manager/clanManager';
 import { ConfigService } from './service/configService';
-import { PlayerListService } from './service/playerListService';
+// import { PlayerListService } from './service/playerListService';
 import { PlayerManager } from './manager/playerManager';
+import { Util } from './util/util';
 
 // Other constants
 const bot: Discord.Client = new Discord.Client();
@@ -65,18 +66,19 @@ bot.on('message', async (message: Message) => {
     } else if (command === commands.get('add')) {
         responseArray = await clanManager.addClans(args);
     } else if (command === commands.get('remove')) {
-        // Pre-emptively remove duplicates
-        const set = new Set<string>(args);
-        responseArray = clanManager.removeClans(Array.from(set));
+        responseArray = clanManager.removeClans(args);
     } else if (command === commands.get('seed')) {
-        responseArray = await playerManager.updatePlayerData(false);
+        responseArray = await playerManager.loadFreshRosters();
     } else if (command === commands.get('check')) {
-        responseArray = await playerManager.updatePlayerData(true);
+        responseArray = await playerManager.updatePlayerData();
     }
+
+    // Make the output safe for Discord
+    const sanitizedResponse = Util.discordify(responseArray);
 
     // Send the accumulated responses from the program
     // In general, this will only have one or two values, but there may be times where more are necessary
-    for (const response of responseArray) {
+    for (const response of sanitizedResponse) {
         await message.channel.send(response);
     }
 });

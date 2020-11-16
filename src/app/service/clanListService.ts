@@ -1,8 +1,9 @@
 import { createWriteStream, existsSync, readFileSync } from 'fs';
-import { Clan } from '../object/clan';
 import { ApiService } from './apiService';
+import { Clan } from '../object/clan';
 import { ConfigService } from './configService';
 import { Player } from '../object/player';
+import { RosterUpdate } from "../util/interfaces";
 import path from 'path';
 
 /**
@@ -101,53 +102,23 @@ export class ClanListService {
     }
 
     /**
-     * Determines the new players and those that left for the clan, and updates the roster
+     * Updates each clan's roster with the new players and removes any that left
      *
-     * @param clanId
-     *      The id of the clan to update
-     * @param newRoster
-     *      The new roster for each clan
+     * @param rosterUpdate
+     *      A map for each clan containing the players to add and remove
      * @return
-     *      An array of string containing the information of the players that left, or an empty array if none
+     *      A map containing a map of players removed from each clan
      */
-    public updateClanRoster(clanId: number, newRoster: Map<number, Player>): string[] {
-        // TODO: This is a disaster right now
-        const result: string[] = [];
-        const clan: Clan = this._clanList.get(clanId);
-        const clanRoster = clan.getRoster();
-        const newPlayers: Map<number, Player> = new Map<number, Player>();
-        const leftPlayers: Map<number, Player> = new Map<number, Player>();
-
-        // Determine the new players to the clan
-        const newPlayerIds: number[] = Array.from(newRoster.keys()).filter(playerId => !clanRoster.has(playerId));
-        for (const playerId of newPlayerIds) {
-            newPlayers.set(playerId, newRoster.get(playerId));
-        }
-
-        // Determine the players that left the clan
-        const leftPlayerIds: number[] = Array.from(clanRoster.keys()).filter(playerId => !newRoster.has(playerId));
-        for (const playerId of leftPlayerIds) {
-            leftPlayers.set(playerId, clanRoster.get(playerId));
-        }
-
-        if (newPlayers.size || leftPlayers.size) {
-            clan.updateRoster(newPlayers, leftPlayers);
-        }
-
-        // Get the information on the players that have left
-        // TODO: Sort by WN8
-        if (leftPlayers.size) {
-            result.push(`**${ clan.getTag() }**`);
-
-            for (const player of leftPlayers.values()) {
-                result.push(player.getPlayerInfo());
-            }
-            result.push('\n');
+    public updateClanRoster(rosterUpdate: Map<number, RosterUpdate>): Map<number, Map<number, Player>> {
+        const removedPlayers: Map<number, Map<number, Player>> = new Map<number, Map<number, Player>>();
+        for (const [clanId, update] of rosterUpdate) {
+            this._clanList.get(clanId).updateRoster(update.add, update.remove);
+            removedPlayers.set(clanId, update.remove);
         }
 
         createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
 
-        return result;
+        return removedPlayers;
     }
 
     /**

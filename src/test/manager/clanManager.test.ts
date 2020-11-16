@@ -13,8 +13,8 @@ let clanManager: ClanManager;
 
 let testClanList: Map<number, Clan>;
 
-let addTrackedClansResponse: string[];
-let removeTrackedClansResponse: string[];
+let addTrackedClansResponse: Map<number, Clan>;
+let removeTrackedClansResponse: Map<number, Clan>;
 
 const addedMessage = ['Successfully added:\n1234\n5678\n'];
 const removedMessage = ['Successfully removed:\n123\n456\n'];
@@ -30,8 +30,13 @@ test.beforeEach(() => {
     testClanList.set(456, new Clan(456, '_TAG_', null));
     testClanList.set(789, new Clan(789, '_clan', null));
 
-    addTrackedClansResponse = ['1234', '5678'];
-    removeTrackedClansResponse = ['123', '456'];
+    addTrackedClansResponse = new Map<number, Clan>();
+    addTrackedClansResponse.set(1234, new Clan(1234, 'Test1', null));
+    addTrackedClansResponse.set(5678, new Clan(5678, 'Test2', null));
+
+    removeTrackedClansResponse = new Map<number, Clan>();
+    removeTrackedClansResponse.set(123, new Clan(123, 'Test1', null));
+    removeTrackedClansResponse.set(456, new Clan(456, 'Test2', null));
 });
 
 test.afterEach(() => {

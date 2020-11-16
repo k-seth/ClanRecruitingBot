@@ -4,7 +4,7 @@ import { PlayerStatus } from '../util/util';
  * A class representing a player
  */
 export class Player {
-    private _status: PlayerStatus = PlayerStatus.Active;
+    private _lastBattle: number = null;
     private _wn8: number = null;
 
     /**
@@ -35,11 +35,11 @@ export class Player {
     /**
      *
      *
-     * @param status
-     *      The status of the player
+     * @param lastBattle
+     *      The epoch time time of the player's last battle
      */
-    public setStatus(status: PlayerStatus): void {
-        this._status = status;
+    public setLastBattle(lastBattle: number): void {
+        this._lastBattle = lastBattle;
     }
 
     /**
@@ -60,11 +60,11 @@ export class Player {
     public getPlayerInfo(): string {
         // <player> (WN8: <wn8>)
         // <status/WotLabs>
-        if (this._status === PlayerStatus.Active) {
+        if (status === PlayerStatus.Active) {
             return `${ this._name } (WN8: ${ this._wn8 }\n<${ this.getWotLabs() }>`;
         }
 
-        return `${ this._name } (WN8: ${ this._wn8 }\n${ this._status }`;
+        return `${ this._name } (WN8: ${ this._wn8 }\n${ status }`;
     }
 
     /**

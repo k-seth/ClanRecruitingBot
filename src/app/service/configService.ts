@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
-import { Config } from '../object/config';
+import { Config } from '../util/interfaces';
 import { ConfigError } from '../error/ConfigError';
 import { Util } from '../util/util';
 import path from 'path';

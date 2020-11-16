@@ -2,7 +2,6 @@ import { ApiService } from '../service/apiService';
 import { Clan } from '../object/clan';
 import { ClanListService } from '../service/clanListService';
 import { ConfigService } from '../service/configService';
-import { Util } from '../util/util';
 
 /**
  * Manages the Discord requests related to clan information.
@@ -24,7 +23,6 @@ export class ClanManager {
 
     /**
      * Adds the given clans to the list of tracked clans.
-     * Output is expected to be Discord safe.
      *
      * @param clansToAdd
      *      An array representing the ids of clans to add to the list of tracked clans
@@ -33,7 +31,7 @@ export class ClanManager {
      */
     public async addClans(clansToAdd: string[]): Promise<string[]> {
         if (!clansToAdd.length) {
-            return Util.discordify(['No clans supplied.']);
+            return ['No clans supplied.'];
         }
 
         // Make sure only inputs consisting solely of numbers and are not already tracked
@@ -42,29 +40,28 @@ export class ClanManager {
             .filter(clanId => !this._clanListService.getClanList().has(clanId));
 
         if (!validClans.length) {
-            return Util.discordify(['None of the requested clans are valid.']);
+            return ['None of the requested clans are valid.'];
         }
 
         let clanData: Map<number, Clan>;
         try {
             clanData = await this._apiService.fetchClanData(validClans);
         } catch (error) {
-            return Util.discordify([error.message]);
+            return [error.message] as string[];
         }
 
         if (!clanData.size) {
-            return Util.discordify(['None of the requested clans are valid.']);
+            return ['None of the requested clans are valid.'];
         }
 
         const action: string[] = ['Successfully added:'];
-        // TODO: I broke this... Again
-        const response: string[] = this._clanListService.addClans(clanData);
-        return Util.discordify(action.concat(response));
+        const response: Map<number, Clan> = this._clanListService.addClans(clanData);
+        const output = Array.from(response.values()).map(clan => clan.getClanInfo());
+        return action.concat(output);
     }
 
     /**
      * Removes the given clans from the list of tracked clans.
-     * Output is expected to be Discord safe.
      *
      * @param clansToRemove
      *      An array representing the ids of the clans to remove from the list of tracked clans
@@ -73,7 +70,7 @@ export class ClanManager {
      */
     public removeClans(clansToRemove: string[]): string[] {
         if (!clansToRemove.length) {
-            return Util.discordify(['No clans supplied.']);
+            return ['No clans supplied.'];
         }
 
         // Filter out any non-numeric only inputs, and determine if they are in the currently tracked list
@@ -82,18 +79,17 @@ export class ClanManager {
             .filter(clanId => this._clanListService.getClanList().has(clanId));
 
         if (!validClans.length) {
-            return Util.discordify(['None of the requested clans are valid.']);
+            return ['None of the requested clans are valid.'];
         }
 
         const action: string[] = ['Successfully removed:'];
-        // TODO: I broke this... Again
-        const response: string[] = this._clanListService.removeClans(validClans);
-        return Util.discordify(action.concat(response));
+        const response: Map<number, Clan> = this._clanListService.removeClans(validClans);
+        const output = Array.from(response.values()).map(clan => clan.getClanInfo());
+        return action.concat(output);
     }
 
     /**
      * Provides a user readable list of all clans currently being tracked.
-     * Output is expected to be Discord safe.
      *
      * @returns
      *      An array of Discord message(s) containing the info of each tracked clan
@@ -101,7 +97,6 @@ export class ClanManager {
     public showClanList(): string[] {
         const clans: Clan[] = Array.from(this._clanListService.getClanList().values());
 
-        const readableClanList: string[] = clans.map(clan => clan.getClanInfo());
-        return Util.discordify(readableClanList);
+        return clans.map(clan => clan.getClanInfo());
     }
 }
