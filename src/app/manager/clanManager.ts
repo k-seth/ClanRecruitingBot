@@ -26,7 +26,7 @@ export class ClanManager {
      *
      * @param clansToAdd
      *      An array representing the ids of clans to add to the list of tracked clans
-     * @returns
+     * @return
      *      An array with the response message(s)
      */
     public async addClans(clansToAdd: string[]): Promise<string[]> {
@@ -54,10 +54,13 @@ export class ClanManager {
             return ['None of the requested clans are valid.'];
         }
 
-        const action: string[] = ['Successfully added:'];
+        const output: string[] = ['Successfully added:'];
         const response: Map<number, Clan> = this._clanListService.addClans(clanData);
-        const output = Array.from(response.values()).map(clan => clan.getClanInfo());
-        return action.concat(output);
+        for (const clan of response.values()) {
+            output.push(clan.getClanInfo());
+        }
+
+        return output;
     }
 
     /**
@@ -65,7 +68,7 @@ export class ClanManager {
      *
      * @param clansToRemove
      *      An array representing the ids of the clans to remove from the list of tracked clans
-     * @returns
+     * @return
      *      An array containing the result of the removal action
      */
     public removeClans(clansToRemove: string[]): string[] {
@@ -82,16 +85,19 @@ export class ClanManager {
             return ['None of the requested clans are valid.'];
         }
 
-        const action: string[] = ['Successfully removed:'];
+        const output: string[] = ['Successfully removed:'];
         const response: Map<number, Clan> = this._clanListService.removeClans(validClans);
-        const output = Array.from(response.values()).map(clan => clan.getClanInfo());
-        return action.concat(output);
+        for (const clan of response.values()) {
+            output.push(clan.getClanInfo());
+        }
+
+        return output;
     }
 
     /**
      * Provides a user readable list of all clans currently being tracked.
      *
-     * @returns
+     * @return
      *      An array of Discord message(s) containing the info of each tracked clan
      */
     public showClanList(): string[] {

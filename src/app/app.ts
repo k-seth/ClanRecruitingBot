@@ -62,7 +62,7 @@ bot.on('message', async (message: Message) => {
     if (command === commands.get('list')) {
         responseArray = clanManager.showClanList();
     } else if (command === commands.get('help')) {
-        await message.channel.send('Command coming soon!');
+        responseArray = ['Command coming soon!'];
     } else if (command === commands.get('add')) {
         responseArray = await clanManager.addClans(args);
     } else if (command === commands.get('remove')) {

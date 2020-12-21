@@ -1,9 +1,10 @@
-import { ClanDetails, PlayerDetails } from '../util/interfaces';
+import axios from 'axios';
 import { ApiError } from '../error/ApiError';
 import { Clan } from '../object/clan';
-import { ConfigService } from './configService';
 import { Player } from '../object/player';
-import axios from 'axios';
+import { ClanDetails, PlayerDetails } from '../util/interfaces';
+import { PlayerStatus } from '../util/util';
+import { ConfigService } from './configService';
 
 /**
  * A service class responsible for providing the making API requests
@@ -24,14 +25,16 @@ export class ApiService {
      *      The url to which to fetch the data from
      * @param body
      *      The body data to be sent. JSON encoded as URLSearchParams
-     * @returns
+     * @return
      *      The raw data from the Wargaming API
+     * @private
      */
     private static async callApi(url: string, body: URLSearchParams): Promise<{ status: string, meta, data }> {
         const apiError = 'An unexpected error occurred contacting the Wargaming API.';
         const dataError = 'An unexpected error occurred with the data returned by Wargaming.';
 
         const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        // TODO: There seems to be an issue with this that results in the application_id not being recognized
         return await axios.post(url , body, { headers })
             .then(async res => {
                 const response: { status: string, meta, data } = await res.data;
@@ -49,8 +52,9 @@ export class ApiService {
      *
      * @param url
      *      The url to fetch the data from
-     * @returns
+     * @return
      *      A string which is a raw version of the player's WoTLab page
+     * @private
      */
     private static async callWotlabs(url): Promise<string> {
         const apiError = 'An unexpected error occurred contacting WoTLabs';
@@ -73,8 +77,9 @@ export class ApiService {
      *      The name of the id associated with the API call. Used as the key name in the request parameters
      * @param fields
      *      The fields to include in the response from the API
-     * @returns
+     * @return
      *      The collected raw results from the Wargaming API
+     * @private
      */
     private async chunkedApiCall(
         data: string[] | number[],
@@ -89,7 +94,7 @@ export class ApiService {
             const dataChunk = data.slice(i, i + maxSize).join();
 
             const bodyObj = { application_id: this._configService.appId(), [requestId]: dataChunk, fields };
-            const json: { status: string, meta, data } = await ApiService.callApi(url, new URLSearchParams(JSON.stringify(bodyObj)));
+            const json: { status: string, meta, data } = await ApiService.callApi(url, new URLSearchParams(bodyObj));
 
             Object.assign(apiData, json.data);
         }
@@ -101,13 +106,13 @@ export class ApiService {
      *
      * @param idList
      *      The list of clan ids to get data for
-     * @returns
+     * @return
      *      A map of the requested clans
      */
     public async fetchClanData(idList: number[]): Promise<Map<number, Clan>> {
         const clanResult: ClanDetails = await this.chunkedApiCall(idList,
             `${ this._configService.apiEndpoint() }/wot/clans/info/`, 'clan_id',
-            'members.account_id,members.account_name,tag,is_clan_disbanded');
+            'members.account_id,tag,is_clan_disbanded');
 
         const clanData: Map<number, Clan> = new Map<number, Clan>();
 
@@ -119,12 +124,8 @@ export class ApiService {
                 continue;
             }
 
-            const roster: Map<number, Player> = new Map<number, Player>();
-
-            for (const player of data.members) {
-                const id: number = player.account_id;
-                roster.set(id, new Player(player.account_name, this._configService.server(), id));
-            }
+            const memberIds: number[] = data.members.map(object => object.account_id);
+            const roster: Map<number, Player> = await this.fetchPlayerData(memberIds);
 
             const clan = new Clan(clanId, data.tag, roster);
             clanData.set(clanId, clan);
@@ -133,11 +134,48 @@ export class ApiService {
         return clanData;
     }
 
-
-    public async fetchPlayerData(idList): Promise<> {
-        // This is a huge waster of an API call, but Wargaming does not provide last battle time via clan member data
+    /**
+     * Constructs a map of the requested players
+     *
+     * @param idList
+     *      The list of clan ids to get data for
+     * @return
+     *      A map of the requested players
+     */
+    public async fetchPlayerData(idList: number[]): Promise<Map<number, Player>> {
+        // This is a huge waste of an API call, but Wargaming does not provide last battle time via clan member data
         const playerResult: PlayerDetails = await this.chunkedApiCall(idList,
-            `${ this._configService.apiEndpoint() }/wot/account/info/`, 'account_id', 'last_battle_time');
+            `${ this._configService.apiEndpoint() }/wot/account/info/`, 'account_id', 'nickname,last_battle_time');
 
+        const playerData: Map<number, Player> = new Map<number, Player>();
+
+        for (const id of idList) {
+            const details = playerResult[id];
+            const playerStatus: PlayerStatus = this.determineStatus(details.last_battle_time);
+            playerData.set(id, new Player(details.nickname, playerStatus, this._configService.server(), id));
+        }
+
+        return playerData;
+    }
+
+    /**
+     * Helper function for determining the player's status
+     *
+     * @param lastBattle
+     *      Epoch time of the player's last battle
+     * @return
+     *      The player's status
+     * @private
+     */
+    private determineStatus(lastBattle: number): PlayerStatus {
+        const epochWeek = 604800;
+        const inactivePeriod = this._configService.getInactivePeriod();
+
+        // TODO: This will eventually need to determine if below requirements as well
+        if (inactivePeriod < 1 || (new Date).getTime()/1000 - lastBattle < epochWeek * inactivePeriod) {
+            return PlayerStatus.Active;
+        }
+
+        return PlayerStatus.Inactive;
     }
 }

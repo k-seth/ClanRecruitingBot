@@ -26,7 +26,7 @@ export class PlayerManager {
     /**
      * A handler function which makes calls to functions to update rosters and construct the list of players that have left.
      *
-     * @returns
+     * @return
      *      An array containing one or more strings representing the result of the request
      */
     public async updatePlayerData(): Promise<string[]> {
@@ -37,29 +37,53 @@ export class PlayerManager {
             return [error.message] as string[];
         }
 
+        const playerData: Map<number, RosterUpdate> = new Map<number, RosterUpdate>();
+        const clanList = this._clanListService.getClanList();
 
-        const playerData: Map<number, Map<number, Player>> = new Map<number, Map<number, Player>>();
-        const result: string[] = [];
-
+        // Iterate over the old and new rosters for each clan to find the differences
         for (const [clanId, clan] of clanData.entries()) {
-            playerData.set(clanId, c) = this._clanListService.updateClanRoster(clanId, clan.getRoster());
+            // TODO: This could use some cleaning up yet
+            const newRoster: Map<number, Player> = clan.getRoster();
+            const oldRoster: Map<number, Player> = clanList.get(clanId).getRoster();
 
-            result.concat(clanResult);
+            const newPlayerIds: number[] = Array.from(newRoster.keys()).filter(id => !oldRoster.has(id));
+            const leftPlayerIds: number[] = Array.from(oldRoster.keys()).filter(id => !newRoster.has(id));
+
+            const newPlayers: Map<number, Player> = new Map<number, Player>();
+            const leftPlayers: Map<number, Player> = new Map<number, Player>();
+
+            newPlayerIds.forEach(id => newPlayers.set(id, newRoster.get(id)));
+            leftPlayerIds.forEach(id => leftPlayers.set(id, oldRoster.get(id)));
+
+            if (newPlayers.size || leftPlayers.size) {
+                playerData.set(clanId, { remove: leftPlayers, add: newPlayers });
+            }
         }
 
-
-
-        if (!result.length) {
+        const result = this._clanListService.updateClanRoster(playerData);
+        if (!result.size) {
             return ['No players have left since the last check.'];
         }
 
-        return result;
+        // Convert the result into a output friendly format
+        const output: string[] = [];
+        for (const [clanId, leftPlayers] of result) {
+            output.push(`**${ clanList.get(clanId).getTag() }**`);
+
+            for (const player of leftPlayers.values()) {
+                output.push(`${ player.getPlayerInfo() }`);
+            }
+
+            output.push(` `);
+        }
+
+        return output;
     }
 
     /**
-     * Sets new rosters
+     * A handler function for setting completely new rosters for clans
      *
-     * @returns
+     * @return
      *      A string confirming that new data has been saved
      */
     public async loadFreshRosters(): Promise<string[]> {

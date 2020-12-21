@@ -4,12 +4,13 @@ import { PlayerStatus } from '../util/util';
  * A class representing a player
  */
 export class Player {
-    private _lastBattle: number = null;
-    private _wn8: number = null;
+    private _wn8 = 0;
 
     /**
      * @param _name
      *      The name used by the player
+     * @param _status
+     *      The player's status
      * @param _server
      *      The game server of the player
      * @param id
@@ -17,6 +18,7 @@ export class Player {
      */
     constructor(
         private _name: string,
+        private readonly _status: PlayerStatus,
         private readonly _server: string,
         public readonly id: number
     ) {
@@ -33,16 +35,7 @@ export class Player {
     }
 
     /**
-     *
-     *
-     * @param lastBattle
-     *      The epoch time time of the player's last battle
-     */
-    public setLastBattle(lastBattle: number): void {
-        this._lastBattle = lastBattle;
-    }
-
-    /**
+     * Sets the player's wn8
      *
      * @param wn8
      *      The updated wn8 of the player
@@ -60,11 +53,11 @@ export class Player {
     public getPlayerInfo(): string {
         // <player> (WN8: <wn8>)
         // <status/WotLabs>
-        if (status === PlayerStatus.Active) {
-            return `${ this._name } (WN8: ${ this._wn8 }\n<${ this.getWotLabs() }>`;
+        if (this._status === PlayerStatus.Active) {
+            return `${ this._name } (WN8: ${ this._wn8 })\n<${ this.getWotLabs() }>`;
         }
 
-        return `${ this._name } (WN8: ${ this._wn8 }\n${ status }`;
+        return `${ this._name } (WN8: ${ this._wn8 })\n${ this._status }`;
     }
 
     /**
@@ -75,5 +68,35 @@ export class Player {
      */
     public getWotLabs(): string {
         return `https://wotlabs.net/${ this._server }/player/${ this._name }`;
+    }
+
+    /**
+     * Provides the player's in-game name
+     *
+     * @return
+     *      THe player's name
+     */
+    public getName(): string {
+        return this._name;
+    }
+
+    /**
+     * Provides the status of the player
+     *
+     * @return
+     *      The player's status
+     */
+    public getStatus(): PlayerStatus {
+        return this._status;
+    }
+
+    /**
+     * Provides the server region of the player
+     *
+     * @return
+     *      The player's server region
+     */
+    public getServer(): string {
+        return this._server;
     }
 }

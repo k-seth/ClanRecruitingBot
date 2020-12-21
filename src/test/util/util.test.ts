@@ -25,3 +25,19 @@ const discordify = (t: ExecutionContext, input: string[], expected: string[]) =>
 
 test('discordify escape underscores', discordify, ['Test _underscore_ replacement'], ['Test \\_underscore\\_ replacement\n']);
 test('discordify combine messages', discordify, ['Message one', 'Message two'], ['Message one\nMessage two\n']);
+
+
+
+test('discordify multiple messages', t => {
+    const templateString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam fermentum ornare varius orci aliquam.';
+
+    const input: string[] = [];
+
+    for (let i = 0; i <= 20; i++) {
+        input.push(templateString);
+    }
+
+    const actual = Util.discordify(input);
+
+    t.is(actual.length, 2);
+});

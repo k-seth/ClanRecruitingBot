@@ -16,10 +16,8 @@
 
 :: Setup environment
 ren config_template.txt config.json
+if not exist .\dist\app\ mkdir .\dist\app\
 move config.json .\dist\app
-
-:: Setup app
-if not exist .\dist\app\historical mkdir .\dist\app\historical
 call npm install
 
 :: Run server

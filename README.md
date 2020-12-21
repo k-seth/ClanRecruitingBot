@@ -49,4 +49,4 @@ https://github.com/k-seth/ClanRecruitingBot/wiki/Commands
     * This will be something to look into, but it is really an annoyance than an issue
 
   
-Disclaimer: Use at your own discretion. There is no guaranteed of program stability.
+Disclaimer: Use at your own discretion. There is no guarantee of program stability.

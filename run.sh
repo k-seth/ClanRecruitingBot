@@ -17,9 +17,8 @@
 #!/bin/bash
 
 # Setup environment
-[ ! -f ./dist/app/config.json ] && mv ./config_template.txt ./dist/app/config.json
+[ ! -f ./dist/app/config.json ] && mkdir -p ./dist/app/ && mv ./config_template.txt ./dist/app/config.json
 
-mkdir -p ./dist/app/historical
 npm install
 
 # Run server

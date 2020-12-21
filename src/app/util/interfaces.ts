@@ -1,4 +1,5 @@
 import { Player } from '../object/player';
+import { PlayerStatus } from './util';
 
 /**
  * Interface defining the expected format for clan data from the Wargaming API
@@ -15,7 +16,6 @@ export interface ClanDetails {
  * Interface defining the expected format for clan member data from the Wargaming API
  */
 export interface ClanMemberDetails {
-    account_name: string;
     account_id: number;
 }
 
@@ -24,6 +24,7 @@ export interface ClanMemberDetails {
  */
 export interface PlayerDetails {
     [id: string]: {
+        nickname: string;
         last_battle_time: number;
     };
 }
@@ -64,4 +65,23 @@ export interface Config {
         limit_to: string[]
     };
     readonly clanList: string[];
+}
+
+/**
+ * Interface defining the JSON object for file IO
+ */
+export interface PersistenceEntity {
+    [clanId: string]: {
+        id: number,
+        _tag: string,
+        _roster: {
+            [playerId: string]: {
+                id: number,
+                _name: string,
+                _status: PlayerStatus,
+                _server: string,
+                _wn8: number
+            }
+        }
+    }
 }

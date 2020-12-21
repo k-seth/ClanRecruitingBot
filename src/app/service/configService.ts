@@ -36,7 +36,7 @@ export class ConfigService {
     /**
      * Gets the base api endpoint to use when calling the Wargaming API
      *
-     * @returns
+     * @return
      *      The Wargaming API endpoint to call
      */
     public apiEndpoint(): string {
@@ -46,7 +46,7 @@ export class ConfigService {
     /**
      * Gets the application id used for api calls
      *
-     * @returns
+     * @return
      *      The application id to use during API calls
      */
     public appId(): string {
@@ -56,7 +56,7 @@ export class ConfigService {
     /**
      * Gets the clan list in the config file to use as the base list
      *
-     * @returns
+     * @return
      *      The default list of clans in the config file
      */
     public configList(): string[] {
@@ -66,7 +66,7 @@ export class ConfigService {
     /**
      * Gets the Wargaming server being used
      *
-     * @returns
+     * @return
      *      The Wargaming server
      */
     public server(): string {
@@ -76,7 +76,7 @@ export class ConfigService {
     /**
      * Gets the Discord bot token
      *
-     * @returns
+     * @return
      *      The token required to connect to Discord
      */
     public token(): string {
@@ -88,7 +88,7 @@ export class ConfigService {
     /**
      * Gets the bot commands
      *
-     * @returns
+     * @return
      *      A map of the commands usable by the bot
      */
     public getCommands(): Map<string, string> {
@@ -98,7 +98,7 @@ export class ConfigService {
     /**
      * Gets the command prefix
      *
-     * @returns
+     * @return
      *      The prefix used by the bot
      */
     public getPrefix(): string {
@@ -109,10 +109,20 @@ export class ConfigService {
      * Gets the set of channels the bot is restricted to reading messages in.
      * This is intended to supplement Discord permissions.
      *
-     * @returns
+     * @return
      *      The set of channels the bot is restricted to reading
      */
     public getRestrictedChannels(): Set<string> {
         return new Set<string>(this._restrictedChannels);
+    }
+
+    /**
+     * Gets the number of weeks before a player is considered inactive
+     *
+     * @return
+     *      The number of weeks before a player is labelled inactive
+     */
+    public getInactivePeriod(): number {
+        return this._config.app.inactive_weeks;
     }
 }

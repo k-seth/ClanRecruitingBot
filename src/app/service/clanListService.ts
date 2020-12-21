@@ -1,9 +1,9 @@
+import { PersistenceEntity, RosterUpdate } from '../util/interfaces';
 import { createWriteStream, existsSync, readFileSync } from 'fs';
 import { ApiService } from './apiService';
 import { Clan } from '../object/clan';
 import { ConfigService } from './configService';
 import { Player } from '../object/player';
-import { RosterUpdate } from "../util/interfaces";
 import path from 'path';
 
 /**
@@ -29,15 +29,14 @@ export class ClanListService {
      * Assigns the list of tracked clans from its file, creating it if it does not exist
      * Throws an error if an API failure occurs while creating the initial list
      *
-     * @returns
+     * @return
      *      An empty promise
      * @private
      */
     private async readClanList(): Promise<Map<number, Clan>> {
         if (existsSync(this._clanListPath)) {
-            // TODO: Determine if storing as a map is the best option
-            // Also, with all the changes make sure this actually works now
-            return JSON.parse(readFileSync(this._clanListPath, 'utf-8')) as Map<number, Clan>;
+            const data = JSON.parse(readFileSync(this._clanListPath, 'utf-8')) as PersistenceEntity;
+            return ClanListService.unwrapPersistenceEntity(data);
         }
 
         // Make sure the list is API safe
@@ -46,15 +45,14 @@ export class ClanListService {
 
         const clanData = await this._apiService.fetchClanData(validClans);
 
-        // TODO: Verify a thrown error above will not cause file creation
-        createWriteStream(this._clanListPath).write(JSON.stringify(clanData), 'utf-8');
+        createWriteStream(this._clanListPath).write(JSON.stringify(ClanListService.createPersistenceEntity(clanData)), 'utf-8');
         return clanData;
     }
 
     /**
      * Gets the tracked clans
      *
-     * @returns
+     * @return
      *      The map of tracked clans
      */
     public getClanList(): Map<number, Clan> {
@@ -78,7 +76,7 @@ export class ClanListService {
             affectedClans.set(id, this._clanList.get(id));
         }
 
-        createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
+        createWriteStream(this._clanListPath).write(JSON.stringify(ClanListService.createPersistenceEntity(this._clanList)), 'utf-8');
         return affectedClans;
     }
 
@@ -87,7 +85,7 @@ export class ClanListService {
      *
      * @param idList
      *      The list of clans to remove from the tracked clans
-     * @returns
+     * @return
      *      A map of all the removed clans
      */
     public removeClans(idList: number[]): Map<number, Clan> {
@@ -97,7 +95,7 @@ export class ClanListService {
             this._clanList.delete(id);
         }
 
-        createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
+        createWriteStream(this._clanListPath).write(JSON.stringify(ClanListService.createPersistenceEntity(this._clanList)), 'utf-8');
         return affectedClans;
     }
 
@@ -113,10 +111,12 @@ export class ClanListService {
         const removedPlayers: Map<number, Map<number, Player>> = new Map<number, Map<number, Player>>();
         for (const [clanId, update] of rosterUpdate) {
             this._clanList.get(clanId).updateRoster(update.add, update.remove);
-            removedPlayers.set(clanId, update.remove);
+            if (update.remove.size) {
+                removedPlayers.set(clanId, update.remove);
+            }
         }
 
-        createWriteStream(this._clanListPath).write(JSON.stringify(this._clanList), 'utf-8');
+        createWriteStream(this._clanListPath).write(JSON.stringify(ClanListService.createPersistenceEntity(this._clanList)), 'utf-8');
 
         return removedPlayers;
     }
@@ -124,10 +124,71 @@ export class ClanListService {
     /**
      * Provides an API compatible list of the tracked clans
      *
-     * @returns
+     * @return
      *      An array with the id of each tracked clan
      */
     public getApiList(): number[] {
         return Array.from(this._clanList.keys());
+    }
+
+    /**
+     * Helper function for converting the map object used by the program into a JSON friendly format for file IO
+     *
+     * @param data
+     *      The Map of clan and player data to convert
+     * @return
+     *      A persistence entity capable of being properly written to file
+     * @private
+     */
+    private static createPersistenceEntity(data: Map<number, Clan>): PersistenceEntity {
+        const entity: PersistenceEntity = {};
+
+        for (const [clanId, clan] of data.entries()) {
+            const simplifiedRoster = {};
+            for (const [playerId, player] of clan.getRoster()) {
+                simplifiedRoster[playerId] = {
+                    id: playerId,
+                    _name: player.getName(),
+                    _status: player.getStatus(),
+                    _server: player.getServer(),
+                    _wn8: player.getWotLabs()
+                };
+            }
+
+            entity[clanId] = {
+                id: clanId,
+                _tag: clan.getTag(),
+                _roster: simplifiedRoster
+            };
+        }
+
+        return entity;
+    }
+
+    /**
+     * Helper function for converting a file IO friendly object into the map object used by the program
+     *
+     * @param data
+     *      The persistence entity read from a file
+     * @return
+     *      A map of the clans and players
+     * @private
+     */
+    private static unwrapPersistenceEntity(data: PersistenceEntity): Map<number, Clan> {
+        const clans: Map<number, Clan> = new Map<number, Clan>();
+        Object.keys(data).forEach(clanId => {
+            const clan = data[clanId];
+            const roster = clan._roster;
+
+            const clanRoster: Map<number, Player> = new Map<number, Player>();
+            Object.keys(roster).forEach(playerId => {
+                const player = roster[playerId];
+                clanRoster.set(player.id, new Player(player._name, player._status, player._server, player.id));
+            });
+
+            clans.set(clan.id, new Clan(clan.id, clan._tag, clanRoster));
+        });
+
+        return clans;
     }
 }

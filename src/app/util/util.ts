@@ -9,7 +9,7 @@ export abstract class Util {
      *
      * @param server
      *      The server specified in the config that the data will work off of
-     * @returns
+     * @return
      *      The necessary top level domain information
      */
     public static determineApiDomain(server: string): string {

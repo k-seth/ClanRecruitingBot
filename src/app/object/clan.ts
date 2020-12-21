@@ -41,7 +41,7 @@ export class Clan {
     /**
      * Gets the clan's player roster
      *
-     * @returns
+     * @return
      *      A map containing the players in the clan
      */
     public getRoster(): Map<number, Player> {
