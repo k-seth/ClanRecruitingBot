@@ -30,7 +30,7 @@ There is a number of ways you can customize the bot. Check out the documentation
 https://github.com/k-seth/ClanRecruitingBot/wiki/Customization
 
 ### Starting the program  
-It is highly recommended you review the available commands prior to usage. A complete list of commands and their intended usage can be found here:  
+It is highly recommended you review the available commands prior to usage. A complete list of commands, and their intended usage can be found here:  
 https://github.com/k-seth/ClanRecruitingBot/wiki/Commands 
   
 #### Windows

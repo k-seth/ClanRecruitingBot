@@ -54,6 +54,34 @@ export abstract class Util {
         discordMessages.push(message.replace(/_/g, '\\_'));
         return discordMessages;
     }
+
+    /**
+     * Provides the help message
+     *
+     * @param prefix
+     *      The prefix used by the bot
+     * @param commands
+     *      The commands available to the bot
+     * @return
+     *      The array of help messages for the bot
+     */
+    public static help(prefix: string, commands: Map<string, string>): string[] {
+        const output: string[] = [];
+
+        output.push('**Clan Recruitment Bot Help:**');
+        output.push('Full documentation available at https://github.com/k-seth/ClanRecruitingBot/wiki');
+        output.push(' ');
+        output.push('Commands for using the bot');
+        output.push(`${ prefix }${ commands.get('check') }: Update player data and post to Discord. This is the main command.`);
+        output.push(`${ prefix }${ commands.get('seed') }: Get fresh data. Does not post to Discord. Use this if there is a data error.`);
+        output.push(`${ prefix }${ commands.get('add') } [ID] [ID]: Add new clan(s). Use one or more clan ids at a time. `);
+        output.push(`${ prefix }${ commands.get('remove') } [ID] [ID]: Remove existing clan(s). Use one or more clan ids at a time.`);
+        output.push(`${ prefix }${ commands.get('list') }: Shows the list of tracked clans.`);
+        output.push(' ');
+        output.push('Trouble shooting: https://github.com/k-seth/ClanRecruitingBot#trouble-shooting');
+
+        return output;
+    }
 }
 
 export enum PlayerStatus {

@@ -20,7 +20,6 @@ import { ApiService } from './service/apiService';
 import { ClanListService } from './service/clanListService';
 import { ClanManager } from './manager/clanManager';
 import { ConfigService } from './service/configService';
-// import { PlayerListService } from './service/playerListService';
 import { PlayerManager } from './manager/playerManager';
 import { Util } from './util/util';
 
@@ -29,7 +28,6 @@ const bot: Discord.Client = new Discord.Client();
 const configService: ConfigService = new ConfigService();
 const apiService: ApiService = new ApiService(configService);
 const clanListService: ClanListService = new ClanListService(apiService, configService);
-// const playerListService: PlayerListService = new PlayerListService();
 const clanManager: ClanManager = new ClanManager(apiService, configService, clanListService);
 const playerManager: PlayerManager = new PlayerManager(apiService, configService, clanListService);
 
@@ -58,11 +56,16 @@ bot.on('message', async (message: Message) => {
         return;
     }
 
+    if (clanListService.getLockout()) {
+        await message.channel.send('Operation already in progress. Try again in a few moments.');
+        return;
+    }
+
     let responseArray: string[];
     if (command === commands.get('list')) {
         responseArray = clanManager.showClanList();
     } else if (command === commands.get('help')) {
-        responseArray = ['Command coming soon!'];
+        responseArray = Util.help(configService.getPrefix(), commands);
     } else if (command === commands.get('add')) {
         responseArray = await clanManager.addClans(args);
     } else if (command === commands.get('remove')) {

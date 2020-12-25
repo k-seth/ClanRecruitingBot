@@ -11,6 +11,7 @@ import path from 'path';
  */
 export class ClanListService {
     private _clanList: Map<number, Clan>;
+    private _lockout = false;
     private readonly _clanListPath: string = path.join(__dirname, '..', 'clan_list.json');
 
     /**
@@ -22,7 +23,11 @@ export class ClanListService {
     constructor(private readonly _apiService: ApiService,
                 private readonly _configService: ConfigService
     ) {
-        void this.readClanList().then(list => this._clanList = list);
+        this._lockout = true;
+        void this.readClanList().then(list => {
+            this._clanList = list;
+            this._lockout = false;
+        });
     }
 
     /**
@@ -57,6 +62,14 @@ export class ClanListService {
      */
     public getClanList(): Map<number, Clan> {
         return new Map<number, Clan>(this._clanList);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public getLockout(): boolean {
+        return this._lockout;
     }
 
     /**
